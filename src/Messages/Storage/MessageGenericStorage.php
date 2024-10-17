@@ -4,29 +4,28 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Messages\Storage;
 
-use Illuminate\Support\Collection;
-use Illuminate\Contracts\Support\Arrayable;
-use Droath\ChatbotHub\Messages\UserMessage;
-use Droath\ChatbotHub\Messages\SystemMessage;
 use Droath\ChatbotHub\Messages\AssistantMessage;
 use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
+use Droath\ChatbotHub\Messages\SystemMessage;
+use Droath\ChatbotHub\Messages\UserMessage;
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\Collection;
 
 /**
  * Define message generic storage.
  */
-abstract class MessageGenericStorage implements MessageStorageInterface, Arrayable
+abstract class MessageGenericStorage implements Arrayable, MessageStorageInterface
 {
     public function __construct(
         protected Collection|array $messages = []
-    )
-    {
+    ) {
         $this->messages = is_array($this->messages)
             ? collect($this->messages)
             : $this->messages;
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function get(int $index): UserMessage|SystemMessage
     {
@@ -34,7 +33,7 @@ abstract class MessageGenericStorage implements MessageStorageInterface, Arrayab
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function set(UserMessage|SystemMessage|AssistantMessage $message): static
     {
@@ -44,7 +43,7 @@ abstract class MessageGenericStorage implements MessageStorageInterface, Arrayab
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function remove(int $index): static
     {
@@ -54,7 +53,7 @@ abstract class MessageGenericStorage implements MessageStorageInterface, Arrayab
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function toArray(): array
     {

@@ -9,8 +9,6 @@ interface HasStreamingInterface
     /**
      * Use the resource streaming.
      *
-     * @param \Closure $streamProcess
-     * @param \Closure|null $streamFinished
      *
      * @return $this
      */

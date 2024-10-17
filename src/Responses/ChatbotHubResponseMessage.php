@@ -13,9 +13,7 @@ final readonly class ChatbotHubResponseMessage
 {
     private function __construct(
         public ?string $message,
-    )
-    {
-    }
+    ) {}
 
     public static function fromString(string $message): self
     {

@@ -2,9 +2,9 @@
 
 namespace Droath\ChatbotHub\Tests;
 
+use Droath\ChatbotHub\ChatbotHubServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Droath\ChatbotHub\ChatbotHubServiceProvider;
 
 class TestCase extends Orchestra
 {

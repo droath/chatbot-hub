@@ -6,7 +6,4 @@ namespace Droath\LlmManager\Drivers;
 
 use Droath\ChatbotHubDriverBase;
 
-class Ollama extends ChatbotHubDriverBase
-{
-
-}
+class Ollama extends ChatbotHubDriverBase {}

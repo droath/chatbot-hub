@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Drivers;
 
-use OpenAI\Client;
-use OpenAI\Resources\Embeddings;
-use Droath\ChatbotHub\Tools\Tool;
-use Illuminate\Support\Collection;
-use Droath\ChatbotHub\Tools\ToolProperty;
-use Droath\ChatbotHub\Resources\OpenaiChatResource;
 use Droath\ChatbotHub\Drivers\Contracts\HasChatInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasEmbeddingInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Resources\OpenaiChatResource;
+use Droath\ChatbotHub\Tools\Tool;
+use Droath\ChatbotHub\Tools\ToolProperty;
+use Illuminate\Support\Collection;
+use OpenAI\Client;
+use OpenAI\Resources\Embeddings;
 
 /**
  * Define the openai driver for chatbot hub.
@@ -23,9 +23,7 @@ class Openai implements HasChatInterface, HasEmbeddingInterface
 
     public function __construct(
         protected Client $client
-    )
-    {
-    }
+    ) {}
 
     public static function transformTool(Tool $tool): array
     {
@@ -45,15 +43,9 @@ class Openai implements HasChatInterface, HasEmbeddingInterface
         ];
     }
 
-    /**
-     * @param \Illuminate\Support\Collection $properties
-     *
-     * @return array
-     */
     protected static function transformToolProperties(
         Collection $properties
-    ): array
-    {
+    ): array {
         return $properties->flatMap(function (ToolProperty $property) {
             $data = $property->toArray();
 
@@ -63,7 +55,7 @@ class Openai implements HasChatInterface, HasEmbeddingInterface
                         'type' => $data['type'],
                         'enum' => $data['enum'],
                         'description' => $data['description'],
-                    ])
+                    ]),
                 ];
             }
 
@@ -72,7 +64,7 @@ class Openai implements HasChatInterface, HasEmbeddingInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function chat(): ChatResourceInterface
     {
@@ -82,7 +74,7 @@ class Openai implements HasChatInterface, HasEmbeddingInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function embeddings(): Embeddings
     {

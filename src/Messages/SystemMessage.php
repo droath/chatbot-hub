@@ -14,9 +14,7 @@ final readonly class SystemMessage implements Arrayable
 {
     private function __construct(
         readonly string $content,
-    )
-    {
-    }
+    ) {}
 
     public static function make(string $content): self
     {

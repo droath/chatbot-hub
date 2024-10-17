@@ -6,8 +6,4 @@ namespace Droath\LlmManager\Drivers;
 
 use Droath\ChatbotHubDriverBase;
 
-class Anthropic extends ChatbotHubDriverBase
-{
-
-
-}
+class Anthropic extends ChatbotHubDriverBase {}

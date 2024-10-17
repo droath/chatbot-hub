@@ -14,9 +14,7 @@ final readonly class AssistantMessage implements Arrayable
 {
     private function __construct(
         public string $content,
-    )
-    {
-    }
+    ) {}
 
     public static function make(string $content): self
     {

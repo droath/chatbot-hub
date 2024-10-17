@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub;
 
-use Illuminate\Support\Manager;
-use Droath\ChatbotHub\Drivers\Openai;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
+use Droath\ChatbotHub\Drivers\Openai;
+use Illuminate\Support\Manager;
 
 /**
  * Define the chatbot hub client class.
@@ -14,7 +14,7 @@ use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 class ChatbotHubClient extends Manager
 {
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function getDefaultDriver(): string
     {
@@ -23,8 +23,6 @@ class ChatbotHubClient extends Manager
 
     /**
      * Create teh Openai client class.
-     *
-     * @return \Droath\ChatbotHub\Drivers\Openai
      */
     protected function createOpenaiDriver(): Openai
     {

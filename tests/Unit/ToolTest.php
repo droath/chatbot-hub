@@ -15,7 +15,7 @@ test('it creates a weather tool function with properties', function () {
                 ->required(),
             ToolProperty::make('unit', 'string')
                 ->describe('The unit of measurement to return. Can be "imperial" or "metric".')
-                ->withEnums(['celsius', 'fahrenheit'])
+                ->withEnums(['celsius', 'fahrenheit']),
         ]);
     $data = $tool->toArray();
 

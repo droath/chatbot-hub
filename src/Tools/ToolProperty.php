@@ -11,47 +11,25 @@ use Illuminate\Support\Str;
  */
 final class ToolProperty
 {
-    /**
-     * @var bool
-     */
     public bool $required = false;
-    /**
-     * @var array
-     */
+
     protected array $enum = [];
-    /**
-     * @var string|null
-     */
+
     protected ?string $description = null;
 
-    /**
-     * @param string $name
-     * @param string $type
-     */
     private function __construct(
         public readonly string $name,
         protected readonly string $type,
-    )
-    {
-    }
+    ) {}
 
-    /**
-     * @param string $name
-     * @param string $type
-     *
-     * @return self
-     */
     public static function make(
         string $name,
         string $type,
-    ): self
-    {
+    ): self {
         return new self(Str::snake($name), $type);
     }
 
     /**
-     * @param array $enum
-     *
      * @return $this
      */
     public function withEnums(array $enum): self
@@ -68,8 +46,6 @@ final class ToolProperty
     }
 
     /**
-     * @param string $description
-     *
      * @return $this
      */
     public function describe(string $description): self

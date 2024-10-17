@@ -15,8 +15,7 @@ trait HasStreaming
     public function usingStream(
         \Closure $streamProcess,
         ?\Closure $streamFinished = null
-    ): static
-    {
+    ): static {
         $this->stream = true;
         $this->streamProcess = $streamProcess;
         $this->streamFinished = $streamFinished;
