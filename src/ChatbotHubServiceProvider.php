@@ -25,17 +25,11 @@ class ChatbotHubServiceProvider extends PackageServiceProvider
             ->hasMigration('create_chatbot_hub_user_messages_table');
     }
 
-    /**
-     * @return void
-     */
     public function packageRegistered(): void
     {
         $this->app->register(LivewireServiceProvider::class);
     }
 
-    /**
-     * @return void
-     */
     public function packageBooted(): void
     {
         Livewire::component('chatbot', Chatbot::class);
