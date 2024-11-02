@@ -3,6 +3,7 @@
 namespace Droath\ChatbotHub;
 
 use Livewire\Livewire;
+use Livewire\LivewireServiceProvider;
 use Spatie\LaravelPackageTools\Package;
 use Droath\ChatbotHub\Livewire\Chatbot;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -22,6 +23,14 @@ class ChatbotHubServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasTranslations()
             ->hasMigration('create_chatbot_hub_user_messages_table');
+    }
+
+    /**
+     * @return void
+     */
+    public function packageRegistered(): void
+    {
+        $this->app->register(LivewireServiceProvider::class);
     }
 
     /**
