@@ -2,10 +2,10 @@
 
 namespace Droath\ChatbotHub;
 
+use Droath\ChatbotHub\Livewire\Chatbot;
 use Livewire\Livewire;
 use Livewire\LivewireServiceProvider;
 use Spatie\LaravelPackageTools\Package;
-use Droath\ChatbotHub\Livewire\Chatbot;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class ChatbotHubServiceProvider extends PackageServiceProvider

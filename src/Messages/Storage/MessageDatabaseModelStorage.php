@@ -8,19 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class MessageDatabaseModelStorage extends MessageGenericStorage
 {
-    /**
-     * @var \Illuminate\Database\Eloquent\Model
-     */
     protected Model $model;
 
-    /**
-     * @param string $modelClassname
-     */
     public function __construct(
         string $modelClassname,
-    )
-    {
-        if (!is_subclass_of($modelClassname, Model::class)) {
+    ) {
+        if (! is_subclass_of($modelClassname, Model::class)) {
             throw new \RuntimeException(
                 'Model class must be an instance of
                 Illuminate\Database\Eloquent\Model.'
@@ -36,7 +29,7 @@ class MessageDatabaseModelStorage extends MessageGenericStorage
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function save(): void
     {
@@ -55,7 +48,7 @@ class MessageDatabaseModelStorage extends MessageGenericStorage
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function delete(): void
     {
