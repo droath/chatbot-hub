@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Tools;
 
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
+use Illuminate\Contracts\Support\Arrayable;
 
 /**
  * Define the tool creation class.
@@ -34,7 +34,7 @@ class Tool implements Arrayable
     }
 
     /**
-     * @param  mixed  ...$args
+     * @param mixed ...$args
      */
     public function __invoke(...$args): string
     {
@@ -82,7 +82,8 @@ class Tool implements Arrayable
     }
 
     /**
-     * @param  \Droath\ChatbotHub\Tools\ToolProperty[]  $properties
+     * @param \Droath\ChatbotHub\Tools\ToolProperty[] $properties
+     *
      * @return $this
      */
     public function withProperties(array $properties): self
