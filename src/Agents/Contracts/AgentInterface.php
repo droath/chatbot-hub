@@ -13,8 +13,6 @@ interface AgentInterface
 {
     /**
      * Run the agent implementation.
-     *
-     * @return \Droath\ChatbotHub\Responses\ChatbotHubResponseMessage
      */
     public function run(): ChatbotHubResponseMessage;
 }

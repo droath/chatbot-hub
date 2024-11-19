@@ -4,27 +4,18 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Tools;
 
-use Illuminate\Support\Str;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\Str;
 
 /**
  * Define the tool creation class.
  */
 class Tool implements Arrayable
 {
-    /**
-     * @var bool
-     */
     protected bool $strict = false;
 
-    /**
-     * @var \Closure|null
-     */
     protected ?\Closure $function = null;
 
-    /**
-     * @var string|null
-     */
     protected ?string $description = null;
 
     /**
@@ -32,25 +23,17 @@ class Tool implements Arrayable
      */
     protected array $properties = [];
 
-    /**
-     * @param string $name
-     */
     public function __construct(
         public readonly string $name,
     ) {}
 
-    /**
-     * @param string $name
-     *
-     * @return self
-     */
     public static function make(string $name): self
     {
         return new self(Str::snake($name));
     }
 
     /**
-     * @param mixed ...$args
+     * @param  mixed  ...$args
      */
     public function __invoke(...$args): string
     {
@@ -98,8 +81,7 @@ class Tool implements Arrayable
     }
 
     /**
-     * @param \Droath\ChatbotHub\Tools\ToolProperty[] $properties
-     *
+     * @param  \Droath\ChatbotHub\Tools\ToolProperty[]  $properties
      * @return $this
      */
     public function withProperties(array $properties): self
@@ -109,16 +91,13 @@ class Tool implements Arrayable
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function hasProperties(): bool
     {
         return ! empty($this->properties);
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function toArray(): array
     {
