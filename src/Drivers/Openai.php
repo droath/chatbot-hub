@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Drivers;
 
+use OpenAI\Client;
+use OpenAI\Resources\Embeddings;
+use Droath\ChatbotHub\Tools\Tool;
+use Illuminate\Support\Collection;
+use Droath\ChatbotHub\Tools\ToolProperty;
+use Droath\ChatbotHub\Resources\OpenaiChatResource;
 use Droath\ChatbotHub\Drivers\Contracts\HasChatInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasEmbeddingInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
-use Droath\ChatbotHub\Resources\OpenaiChatResource;
-use Droath\ChatbotHub\Tools\Tool;
-use Droath\ChatbotHub\Tools\ToolProperty;
-use Illuminate\Support\Collection;
-use OpenAI\Client;
-use OpenAI\Resources\Embeddings;
 
 /**
  * Define the openai driver for chatbot hub.
@@ -31,21 +31,22 @@ class Openai implements HasChatInterface, HasEmbeddingInterface
 
         return [
             'type' => 'function',
-            'function' => [
+            'function' => array_filter([
                 'name' => $data['name'],
                 'strict' => $data['strict'] ?? false,
-                'parameters' => [
+                'parameters' => $tool->hasProperties() ? [
                     'type' => 'object',
                     'properties' => static::transformToolProperties($data['properties']),
                     'required' => $data['required'] ?? [],
-                ],
-            ],
+                ] : [],
+            ]),
         ];
     }
 
     protected static function transformToolProperties(
         Collection $properties
-    ): array {
+    ): array
+    {
         return $properties->flatMap(function (ToolProperty $property) {
             $data = $property->toArray();
 

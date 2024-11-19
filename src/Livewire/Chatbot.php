@@ -2,21 +2,21 @@
 
 namespace Droath\ChatbotHub\Livewire;
 
-use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
-use Droath\ChatbotHub\Facades\ChatbotHub;
-use Droath\ChatbotHub\Messages\AssistantMessage;
-use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
-use Droath\ChatbotHub\Messages\Storage\MessageDatabaseModelStorage;
-use Droath\ChatbotHub\Messages\UserMessage;
-use Droath\ChatbotHub\Models\ChatbotHubUserMessages;
-use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use Livewire\Component;
 use Illuminate\View\View;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
-use Livewire\Component;
+use Illuminate\Support\Facades\Log;
+use Droath\ChatbotHub\Facades\ChatbotHub;
+use Droath\ChatbotHub\Messages\UserMessage;
+use Droath\ChatbotHub\Messages\AssistantMessage;
+use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
+use Droath\ChatbotHub\Models\ChatbotHubUserMessages;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
+use Droath\ChatbotHub\Messages\Storage\MessageDatabaseModelStorage;
 
 /**
  * Define the chatbot livewire component.
@@ -37,7 +37,8 @@ class Chatbot extends Component
 
     public function mount(
         ?object $provider = null
-    ): void {
+    ): void
+    {
         $provider = $provider ?? ChatbotProvider::OPENAI;
 
         if (isset($provider) && ! $provider instanceof ChatbotProvider) {
@@ -89,7 +90,7 @@ class Chatbot extends Component
 
     public function renderHtml(?string $content): string
     {
-        return Str::sanitizeHtml(Str::markdown((string) $content));
+        return Str::sanitizeHtml(Str::markdown((string)$content));
     }
 
     protected function chatProvider(): ChatbotProvider

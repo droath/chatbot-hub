@@ -2,11 +2,12 @@
 
 namespace Droath\ChatbotHub;
 
-use Droath\ChatbotHub\Livewire\Chatbot;
 use Livewire\Livewire;
 use Livewire\LivewireServiceProvider;
+use Droath\ChatbotHub\Livewire\Chatbot;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Droath\ChatbotHub\Plugins\AgentWorkerPluginManager;
 
 class ChatbotHubServiceProvider extends PackageServiceProvider
 {
@@ -31,6 +32,10 @@ class ChatbotHubServiceProvider extends PackageServiceProvider
     public function packageRegistered(): void
     {
         $this->app->register(LivewireServiceProvider::class);
+
+        $this->app->singleton(AgentWorkerPluginManager::class, function () {
+            return new AgentWorkerPluginManager();
+        });
     }
 
     /**

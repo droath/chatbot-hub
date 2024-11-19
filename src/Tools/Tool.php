@@ -4,37 +4,53 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Tools;
 
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Contracts\Support\Arrayable;
 
 /**
  * Define the tool creation class.
  */
 class Tool implements Arrayable
 {
+    /**
+     * @var bool
+     */
     protected bool $strict = false;
 
+    /**
+     * @var \Closure|null
+     */
     protected ?\Closure $function = null;
 
-    protected string $description;
+    /**
+     * @var string|null
+     */
+    protected ?string $description = null;
 
     /**
      * @var \Droath\ChatbotHub\Tools\ToolProperty[]
      */
-    protected array|Collection $properties = [];
+    protected array $properties = [];
 
+    /**
+     * @param string $name
+     */
     public function __construct(
         public readonly string $name,
     ) {}
 
+    /**
+     * @param string $name
+     *
+     * @return self
+     */
     public static function make(string $name): self
     {
         return new self(Str::snake($name));
     }
 
     /**
-     * @param  mixed  ...$args
+     * @param mixed ...$args
      */
     public function __invoke(...$args): string
     {
@@ -82,27 +98,38 @@ class Tool implements Arrayable
     }
 
     /**
-     * @param  \Droath\ChatbotHub\Tools\ToolProperty[]  $properties
+     * @param \Droath\ChatbotHub\Tools\ToolProperty[] $properties
+     *
      * @return $this
      */
     public function withProperties(array $properties): self
     {
-        $this->properties = collect($properties);
+        $this->properties = $properties;
 
         return $this;
     }
 
     /**
-     * {@inheritDoc}
+     * @return bool
+     */
+    public function hasProperties(): bool
+    {
+        return ! empty($this->properties);
+    }
+
+    /**
+     * @inheritDoc
      */
     public function toArray(): array
     {
+        $properties = collect($this->properties);
+
         return [
             'name' => $this->name,
             'strict' => $this->strict,
             'description' => $this->description,
-            'properties' => $this->properties,
-            'required' => $this->properties
+            'properties' => $properties,
+            'required' => $properties
                 ->filter(fn (ToolProperty $property) => $property->required)
                 ->map(fn (ToolProperty $property) => $property->name)
                 ->values()

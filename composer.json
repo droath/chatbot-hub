@@ -17,8 +17,15 @@
             "role": "Developer"
         }
     ],
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../plugin-manager"
+        }
+    ],
     "require": {
         "php": "^8.2",
+        "droath/plugin-manager": "dev-main",
         "illuminate/contracts": "^10.0||^11.0",
         "kcs/class-finder": "*",
         "livewire/livewire": "^3.5",
