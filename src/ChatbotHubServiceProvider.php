@@ -2,12 +2,12 @@
 
 namespace Droath\ChatbotHub;
 
-use Droath\ChatbotHub\Livewire\Chatbot;
-use Droath\ChatbotHub\Plugins\AgentWorkerPluginManager;
 use Livewire\Livewire;
 use Livewire\LivewireServiceProvider;
+use Droath\ChatbotHub\Livewire\Chatbot;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Droath\ChatbotHub\Plugins\AgentWorkerPluginManager;
 
 class ChatbotHubServiceProvider extends PackageServiceProvider
 {
@@ -23,7 +23,7 @@ class ChatbotHubServiceProvider extends PackageServiceProvider
             ->hasViews()
             ->hasConfigFile()
             ->hasTranslations()
-            ->hasMigration('create_chatbot_hub_user_messages_table');
+            ->hasMigrations(['create_chatbot_hub_user_messages_table']);
     }
 
     public function packageRegistered(): void
