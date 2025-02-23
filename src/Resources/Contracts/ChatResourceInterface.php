@@ -2,8 +2,8 @@
 
 namespace Droath\ChatbotHub\Resources\Contracts;
 
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 
 interface ChatResourceInterface extends ResourceInterface
 {

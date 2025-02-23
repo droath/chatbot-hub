@@ -4,19 +4,12 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Agents\Contracts;
 
-use Droath\ChatbotHub\Messages\UserMessage;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
+use Droath\ChatbotHub\Messages\UserMessage;
 
 interface ChatAgentInterface extends AgentInterface
 {
-    /**
-     * @param \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider $model
-     * @param array|\Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface $messages
-     * @param array $tools
-     *
-     * @return self
-     */
     public static function make(
         ChatbotProvider $model,
         array|MessageStorageInterface $messages,
@@ -26,7 +19,6 @@ interface ChatAgentInterface extends AgentInterface
     /**
      * Add tool to the chat agent instance.
      *
-     * @param string $tool
      *
      * @return $this
      */
@@ -35,7 +27,6 @@ interface ChatAgentInterface extends AgentInterface
     /**
      * Add tools to the chat agent instance.
      *
-     * @param array $tools
      *
      * @return $this
      */
@@ -44,7 +35,6 @@ interface ChatAgentInterface extends AgentInterface
     /**
      * Add user message instruction to the chat agent instance.
      *
-     * @param \Droath\ChatbotHub\Messages\UserMessage $message
      *
      * @return $this
      */
@@ -53,8 +43,7 @@ interface ChatAgentInterface extends AgentInterface
     /**
      * Add user message instructions to the chat agent instance.
      *
-     * @param \Droath\ChatbotHub\Messages\UserMessage[] $messages
-     *
+     * @param  \Droath\ChatbotHub\Messages\UserMessage[]  $messages
      * @return $this
      */
     public function addMessages(array $messages): static;

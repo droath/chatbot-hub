@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Plugins\Contracts;
 
-use Droath\PluginManager\Contracts\PluginInterface;
 use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
+use Droath\PluginManager\Contracts\PluginInterface;
 
 /**
  * Define the agent plugin worker interface.
