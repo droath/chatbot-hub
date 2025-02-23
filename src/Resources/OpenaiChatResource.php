@@ -4,32 +4,28 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Resources;
 
-use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
-use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
-use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
-use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
-use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
-use Droath\ChatbotHub\Drivers\Openai;
-use Droath\ChatbotHub\Enums\ChatbotRoles;
-use Droath\ChatbotHub\Resources\Concerns\WithMessages;
-use Droath\ChatbotHub\Resources\Concerns\WithResponseFormat;
-use Droath\ChatbotHub\Resources\Concerns\WithTools;
-use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
-use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
-use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
-use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
-use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use OpenAI\Resources\Chat;
 use Droath\ChatbotHub\Tools\Tool;
 use Illuminate\Support\Facades\Log;
-use OpenAI\Resources\Chat;
+use Droath\ChatbotHub\Drivers\Openai;
+use Droath\ChatbotHub\Enums\ChatbotRoles;
 use OpenAI\Responses\Chat\CreateResponse;
 use OpenAI\Responses\Chat\CreateResponseChoice;
 use OpenAI\Responses\Chat\CreateResponseToolCall;
 use OpenAI\Responses\Chat\CreateStreamedResponse;
+use Droath\ChatbotHub\Resources\Concerns\WithTools;
+use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
+use Droath\ChatbotHub\Resources\Concerns\WithMessages;
 use OpenAI\Responses\Chat\CreateStreamedResponseChoice;
+use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
 use OpenAI\Responses\Chat\CreateStreamedResponseToolCall;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Resources\Concerns\WithResponseFormat;
+use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
+use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
+use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 
 /**
  * Define the openai chat resource.
@@ -75,7 +71,8 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
      */
     protected function createResourceResponse(
         array $parameters
-    ): StreamResponse|CreateResponse {
+    ): StreamResponse|CreateResponse
+    {
         return ! $this->stream
             ? $this->resource->create($parameters)
             : $this->resource->createStreamed($parameters);
@@ -87,7 +84,8 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
     protected function processStreamContent(
         CreateStreamedResponse $response,
         ?string $streamContent
-    ): ?string {
+    ): ?string
+    {
         if ($chunk = $response->choices[0]->delta->content) {
             $processCallable = $this->streamProcess;
 
@@ -135,7 +133,8 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
      */
     protected function invokeTool(
         CreateResponseToolCall|CreateStreamedResponseToolCall $toolCall
-    ): ?string {
+    ): ?string
+    {
         $tool = $this->tools->firstWhere('name', $toolCall->function->name);
 
         if ($tool instanceof Tool) {
@@ -160,7 +159,8 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
      */
     protected function handleToolCall(
         CreateResponseChoice|CreateStreamedResponseChoice $choice
-    ): CreateResponse|StreamResponse {
+    ): CreateResponse|StreamResponse
+    {
         $parameters = $this->resourceParameters();
 
         $choiceInstance = match (true) {
@@ -209,7 +209,8 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
      */
     protected function handleSynchronous(
         CreateResponse $response
-    ): ?ChatbotHubResponseMessage {
+    ): ?ChatbotHubResponseMessage
+    {
         foreach ($response->choices as $choice) {
             if (
                 $this->isToolCall($choice)
@@ -230,7 +231,8 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
     protected function processStreamToolCalls(
         CreateStreamedResponse $response,
         array $streamToolCalls
-    ): array {
+    ): array
+    {
         if (empty($this->tools)) {
             return $streamToolCalls;
         }
@@ -266,7 +268,8 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
      */
     protected function handleStream(
         \Traversable $stream,
-    ): ?ChatbotHubResponseMessage {
+    ): ?ChatbotHubResponseMessage
+    {
         $streamContent = null;
         $streamToolCalls = [];
 
