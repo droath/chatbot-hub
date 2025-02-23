@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Resources;
 
-
-use GuzzleHttp\Psr7\Response;
-use Droath\ChatbotHub\Drivers\Perplexity;
-use SoftCreatR\PerplexityAI\PerplexityAI;
-use Droath\ChatbotHub\Resources\Concerns\WithMessages;
 use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
-use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
+use Droath\ChatbotHub\Drivers\Perplexity;
+use Droath\ChatbotHub\Resources\Concerns\WithMessages;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use GuzzleHttp\Psr7\Response;
+use SoftCreatR\PerplexityAI\PerplexityAI;
 
 /**
  * Define the Perplexity chat resource.
@@ -21,30 +20,20 @@ class PerplexityChatResource implements ChatResourceInterface, HasMessagesInterf
 {
     use WithMessages;
 
-    /**
-     * @var string
-     */
     protected string $model = Perplexity::DEFAULT_MODEL;
 
-    /**
-     * @param \SoftCreatR\PerplexityAI\PerplexityAI $client
-     * @param \Droath\ChatbotHub\Drivers\Contracts\DriverInterface $driver
-     */
     public function __construct(
         protected PerplexityAI $client,
         protected DriverInterface $driver
     ) {}
 
-    /**
-     * @return \Droath\ChatbotHub\Responses\ChatbotHubResponseMessage|null
-     */
     public function __invoke(): ?ChatbotHubResponseMessage
     {
         return $this->handleResponse();
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function withModel(string $model): static
     {
@@ -53,9 +42,6 @@ class PerplexityChatResource implements ChatResourceInterface, HasMessagesInterf
         return $this;
     }
 
-    /**
-     * @return \Droath\ChatbotHub\Responses\ChatbotHubResponseMessage|null
-     */
     protected function handleResponse(): ?ChatbotHubResponseMessage
     {
         $response = $this->client->createChatCompletion([],
@@ -85,11 +71,6 @@ class PerplexityChatResource implements ChatResourceInterface, HasMessagesInterf
         ]);
     }
 
-    /**
-     * @param \GuzzleHttp\Psr7\Response $response
-     *
-     * @return array
-     */
     protected function formatJsonFromResponse(Response $response): array
     {
         $content = $response->getBody()->getContents();

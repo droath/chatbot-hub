@@ -4,18 +4,15 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Resources\Concerns;
 
-use Illuminate\Contracts\Support\Arrayable;
 use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
+use Illuminate\Contracts\Support\Arrayable;
 
 trait WithMessages
 {
-    /**
-     * @var array|\Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface
-     */
     protected array|MessageStorageInterface $messages;
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function withMessages(array|MessageStorageInterface $messages): static
     {

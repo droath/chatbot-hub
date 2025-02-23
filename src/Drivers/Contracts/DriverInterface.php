@@ -8,10 +8,5 @@ use Droath\ChatbotHub\Tools\Tool;
 
 interface DriverInterface
 {
-    /**
-     * @param \Droath\ChatbotHub\Tools\Tool $tool
-     *
-     * @return array
-     */
     public static function transformTool(Tool $tool): array;
 }

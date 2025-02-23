@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Drivers;
 
-use Droath\ChatbotHub\Tools\Tool;
 use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
+use Droath\ChatbotHub\Tools\Tool;
 
 abstract class ChatbotHubDriver implements DriverInterface
 {

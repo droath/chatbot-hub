@@ -16,9 +16,6 @@ use Droath\PluginManager\Plugin\BasePlugin;
  */
 abstract class ChatAgentWorkerPlugin extends BasePlugin implements ChatAgentPluginWorkerInterface
 {
-    /**
-     * @var \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider
-     */
     protected ChatbotProvider $defaultProvider = ChatbotProvider::OPENAI;
 
     /**

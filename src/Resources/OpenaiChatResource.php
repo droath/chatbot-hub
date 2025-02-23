@@ -5,11 +5,21 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub\Resources;
 
 use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
+use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
+use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
+use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
 use Droath\ChatbotHub\Drivers\Openai;
 use Droath\ChatbotHub\Enums\ChatbotRoles;
-use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
+use Droath\ChatbotHub\Resources\Concerns\WithMessages;
+use Droath\ChatbotHub\Resources\Concerns\WithResponseFormat;
+use Droath\ChatbotHub\Resources\Concerns\WithTools;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Tools\Tool;
 use Illuminate\Support\Facades\Log;
@@ -18,31 +28,20 @@ use OpenAI\Responses\Chat\CreateResponse;
 use OpenAI\Responses\Chat\CreateResponseChoice;
 use OpenAI\Responses\Chat\CreateResponseToolCall;
 use OpenAI\Responses\Chat\CreateStreamedResponse;
-use Droath\ChatbotHub\Resources\Concerns\WithTools;
-use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
-use Droath\ChatbotHub\Resources\Concerns\WithMessages;
 use OpenAI\Responses\Chat\CreateStreamedResponseChoice;
-use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
 use OpenAI\Responses\Chat\CreateStreamedResponseToolCall;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
-use Droath\ChatbotHub\Resources\Concerns\WithResponseFormat;
-use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
-use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
-use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
-use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
-use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 
 /**
  * Define the openai chat resource.
  */
-class OpenaiChatResource implements ChatResourceInterface, HasToolsInterface, HasMessagesInterface, HasResponseFormatInterface, HasStreamingInterface
+class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface, HasResponseFormatInterface, HasStreamingInterface, HasToolsInterface
 {
     protected string $model = Openai::DEFAULT_MODEL;
 
-    use WithTools;
     use HasStreaming;
     use WithMessages;
     use WithResponseFormat;
+    use WithTools;
 
     public function __construct(
         protected Chat $resource,

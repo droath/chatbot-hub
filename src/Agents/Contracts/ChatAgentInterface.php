@@ -10,13 +10,6 @@ use Droath\ChatbotHub\Messages\UserMessage;
 
 interface ChatAgentInterface extends AgentInterface
 {
-    /**
-     * @param \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider $provider
-     * @param array|\Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface $messages
-     * @param array $tools
-     *
-     * @return self
-     */
     public static function make(
         ChatbotProvider $provider,
         array|MessageStorageInterface $messages,

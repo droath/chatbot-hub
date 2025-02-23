@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub;
 
-use GuzzleHttp\Client;
-use Illuminate\Support\Manager;
-use GuzzleHttp\Psr7\HttpFactory;
+use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Drivers\Openai;
 use Droath\ChatbotHub\Drivers\Perplexity;
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\HttpFactory;
+use Illuminate\Support\Manager;
 use SoftCreatR\PerplexityAI\PerplexityAI;
-use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 
 /**
  * Define the chatbot hub client class.
@@ -44,8 +44,8 @@ class ChatbotHubClient extends Manager
      */
     protected function createPerplexityDriver(): Perplexity
     {
-        $httpClient = new Client();
-        $httpFactory = new HttpFactory();
+        $httpClient = new Client;
+        $httpFactory = new HttpFactory;
 
         return new Perplexity(
             new PerplexityAI(

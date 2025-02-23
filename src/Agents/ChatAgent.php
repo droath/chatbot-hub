@@ -17,7 +17,6 @@ use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
  */
 class ChatAgent implements ChatAgentInterface
 {
-
     protected function __construct(
         protected ChatbotProvider $provider,
         protected array|MessageStorageInterface $messages,
@@ -31,8 +30,7 @@ class ChatAgent implements ChatAgentInterface
         ChatbotProvider $provider,
         array|MessageStorageInterface $messages,
         array $tools = []
-    ): self
-    {
+    ): self {
         return new self($provider, $messages, $tools);
     }
 

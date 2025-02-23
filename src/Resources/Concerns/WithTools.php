@@ -8,9 +8,6 @@ use Illuminate\Support\Collection;
 
 trait WithTools
 {
-    /**
-     * @var array|\Illuminate\Support\Collection
-     */
     protected array|Collection $tools = [];
 
     /**
@@ -25,8 +22,6 @@ trait WithTools
 
     /**
      * Resolve the resource tools.
-     *
-     * @return array
      */
     protected function resolveTools(): array
     {

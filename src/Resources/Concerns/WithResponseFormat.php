@@ -6,13 +6,10 @@ namespace Droath\ChatbotHub\Resources\Concerns;
 
 trait WithResponseFormat
 {
-    /**
-     * @var array
-     */
     protected array $responseFormat = [];
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function withResponseFormat(array $responseFormat): static
     {
