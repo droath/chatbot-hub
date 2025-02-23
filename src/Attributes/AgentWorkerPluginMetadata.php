@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Attributes;
 
-use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\PluginManager\Attributes\PluginMetadata;
+use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 
 #[\Attribute(\Attribute::TARGET_CLASS)]
 class AgentWorkerPluginMetadata extends PluginMetadata
@@ -13,16 +13,17 @@ class AgentWorkerPluginMetadata extends PluginMetadata
     /**
      * Define the attribute constructor.
      *
-     * @param  string  $id
-     *                      The plugin identifier.
-     * @param  string  $label
-     *                         The plugin human-readable name.
+     * @param string $id
+     *   The plugin identifier.
+     * @param string $label
+     *   The plugin human-readable name.
      */
     public function __construct(
         string $id,
         string $label,
         protected ChatbotProvider $model
-    ) {
+    )
+    {
         parent::__construct($id, $label);
     }
 }

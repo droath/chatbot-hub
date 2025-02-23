@@ -30,6 +30,10 @@ class ChatbotHubServiceProvider extends PackageServiceProvider
     {
         $this->app->register(LivewireServiceProvider::class);
 
+        $this->app->singleton(ChatbotHub::class, static function () {
+            return new ChatbotHub();
+        });
+
         $this->app->singleton(AgentWorkerPluginManager::class, function () {
             return new AgentWorkerPluginManager;
         });

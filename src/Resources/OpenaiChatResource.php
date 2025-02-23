@@ -4,32 +4,34 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Resources;
 
-use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
-use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
-use Droath\ChatbotHub\Drivers\Openai;
-use Droath\ChatbotHub\Enums\ChatbotRoles;
-use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
-use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
-use Droath\ChatbotHub\Tools\Tool;
-use Illuminate\Contracts\Support\Arrayable;
+use OpenAI\Resources\Chat;
 use Illuminate\Support\Arr;
+use Droath\ChatbotHub\Tools\Tool;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use OpenAI\Resources\Chat;
+use OpenAI\Responses\StreamResponse;
+use Droath\ChatbotHub\Drivers\Openai;
+use Droath\ChatbotHub\Enums\ChatbotRoles;
 use OpenAI\Responses\Chat\CreateResponse;
+use Illuminate\Contracts\Support\Arrayable;
 use OpenAI\Responses\Chat\CreateResponseChoice;
 use OpenAI\Responses\Chat\CreateResponseToolCall;
 use OpenAI\Responses\Chat\CreateStreamedResponse;
+use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
 use OpenAI\Responses\Chat\CreateStreamedResponseChoice;
 use OpenAI\Responses\Chat\CreateStreamedResponseToolCall;
-use OpenAI\Responses\StreamResponse;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
+use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
 
 /**
  * Define the openai chat resource.
  */
 class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
 {
+    protected array $responseFormat = [];
+
     protected array|Collection $tools = [];
 
     protected string $model = Openai::DEFAULT_MODEL;
@@ -66,6 +68,16 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
     /**
      * {@inheritDoc}
      */
+    public function withResponseFormat(array $responseFormat): static
+    {
+        $this->responseFormat = $responseFormat;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function withMessages(array|MessageStorageInterface $messages): static
     {
         $this->messages = $messages;
@@ -90,7 +102,8 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
      */
     protected function createResourceResponse(
         array $parameters
-    ): StreamResponse|CreateResponse {
+    ): StreamResponse|CreateResponse
+    {
         return ! $this->stream
             ? $this->resource->create($parameters)
             : $this->resource->createStreamed($parameters);
@@ -102,7 +115,8 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
     protected function processStreamContent(
         CreateStreamedResponse $response,
         ?string $streamContent
-    ): ?string {
+    ): ?string
+    {
         if ($chunk = $response->choices[0]->delta->content) {
             $processCallable = $this->streamProcess;
 
@@ -132,6 +146,7 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
                 ? $this->tools->map(fn ($tool) => Openai::transformTool($tool))->toArray()
                 : $this->tools,
             'messages' => $this->resolveMessages(),
+            'response_format' => $this->responseFormat,
         ]);
     }
 
@@ -154,7 +169,7 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
             $messages = $this->messages->toArray();
         }
 
-        return $messages;
+        return array_filter($messages);
     }
 
     /**
@@ -169,13 +184,12 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
     /**
      * Invoke the chat tool from the response.
      *
-     *
-     *
      * @throws \JsonException
      */
     protected function invokeTool(
         CreateResponseToolCall|CreateStreamedResponseToolCall $toolCall
-    ): ?string {
+    ): ?string
+    {
         $tool = $this->tools->firstWhere('name', $toolCall->function->name);
 
         if ($tool instanceof Tool) {
@@ -196,13 +210,12 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
     /**
      * Handle the chat tool calling.
      *
-     *
-     *
      * @throws \JsonException
      */
     protected function handleToolCall(
         CreateResponseChoice|CreateStreamedResponseChoice $choice
-    ): CreateResponse|StreamResponse {
+    ): CreateResponse|StreamResponse
+    {
         $parameters = $this->resourceParameters();
 
         $choiceInstance = match (true) {
@@ -247,12 +260,12 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
     /**
      * Handle the chat synchronous process.
      *
-     *
      * @throws \JsonException
      */
     protected function handleSynchronous(
         CreateResponse $response
-    ): ?ChatbotHubResponseMessage {
+    ): ?ChatbotHubResponseMessage
+    {
         foreach ($response->choices as $choice) {
             if (
                 $this->isToolCall($choice)
@@ -271,7 +284,8 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
     protected function processStreamToolCalls(
         CreateStreamedResponse $response,
         array $streamToolCalls
-    ): array {
+    ): array
+    {
         if (empty($this->tools)) {
             return $streamToolCalls;
         }
@@ -303,12 +317,12 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
     /**
      * Handle the chat stream process.
      *
-     *
      * @throws \JsonException
      */
     protected function handleStream(
         \Traversable $stream,
-    ): ?ChatbotHubResponseMessage {
+    ): ?ChatbotHubResponseMessage
+    {
         $streamContent = null;
         $streamToolCalls = [];
 
