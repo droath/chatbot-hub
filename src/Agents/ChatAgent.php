@@ -4,24 +4,20 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Agents;
 
-use Droath\ChatbotHub\Facades\ChatbotHub;
-use Droath\ChatbotHub\Messages\UserMessage;
-use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
-use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
+use Droath\ChatbotHub\Facades\ChatbotHub;
 use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
+use Droath\ChatbotHub\Messages\UserMessage;
+use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 
 /**
  * Define a chat agent class implementation.
  */
 class ChatAgent implements ChatAgentInterface
 {
-    /**
-     * @param \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider $provider
-     * @param array|\Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface $messages
-     * @param array $tools
-     */
+
     protected function __construct(
         protected ChatbotProvider $provider,
         protected array|MessageStorageInterface $messages,
@@ -29,7 +25,7 @@ class ChatAgent implements ChatAgentInterface
     ) {}
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public static function make(
         ChatbotProvider $provider,
@@ -41,7 +37,7 @@ class ChatAgent implements ChatAgentInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function addTool(string $tool): static
     {
@@ -51,7 +47,7 @@ class ChatAgent implements ChatAgentInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function addTools(array $tools): static
     {
@@ -63,7 +59,7 @@ class ChatAgent implements ChatAgentInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function addMessage(UserMessage $message): static
     {
@@ -95,9 +91,6 @@ class ChatAgent implements ChatAgentInterface
         return $this->createResource()->__invoke();
     }
 
-    /**
-     * @return \Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface
-     */
     protected function createResource(): ChatResourceInterface
     {
         return ChatbotHub::chat($this->provider)

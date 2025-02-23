@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Plugins;
 
-use Droath\PluginManager\DefaultPluginManager;
 use Droath\ChatbotHub\Attributes\AgentWorkerPluginMetadata;
-use Droath\PluginManager\Discovery\NamespacePluginDiscovery;
 use Droath\ChatbotHub\Plugins\Contracts\ChatAgentPluginWorkerInterface;
+use Droath\PluginManager\DefaultPluginManager;
+use Droath\PluginManager\Discovery\NamespacePluginDiscovery;
 
 /**
  * Define the agent worker plugin manager.
