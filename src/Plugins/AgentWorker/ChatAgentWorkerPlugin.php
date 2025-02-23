@@ -19,7 +19,7 @@ abstract class ChatAgentWorkerPlugin extends BasePlugin implements ChatAgentPlug
     /**
      * @var \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider
      */
-    protected ChatbotProvider $defaultModel = ChatbotProvider::OPENAI;
+    protected ChatbotProvider $defaultProvider = ChatbotProvider::OPENAI;
 
     /**
      * @inheritDoc
@@ -27,7 +27,7 @@ abstract class ChatAgentWorkerPlugin extends BasePlugin implements ChatAgentPlug
     public function createAgent(): ChatAgentInterface
     {
         return ChatAgent::make(
-            $this->model(),
+            $this->provider(),
             $this->messages(),
             $this->tools(),
         );
@@ -54,12 +54,12 @@ abstract class ChatAgentWorkerPlugin extends BasePlugin implements ChatAgentPlug
     }
 
     /**
-     * Get the agent worker plugin model.
+     * Get the agent worker plugin provider.
      */
-    protected function model(): ?ChatbotProvider
+    protected function provider(): ?ChatbotProvider
     {
-        return ChatbotProvider::tryFrom($this->pluginDefinition['model'])
-            ?? $this->defaultModel;
+        return ChatbotProvider::tryFrom($this->pluginDefinition['provider'])
+            ?? $this->defaultProvider;
     }
 
     /**

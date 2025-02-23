@@ -6,4 +6,7 @@ return [
         'base_url' => env('OPENAI_BASE_URL', 'api.openai.com/v1'),
         'organization' => env('OPENAI_ORGANIZATION'),
     ],
+    'perplexity' => [
+        'api_key' => env('PERPLEXITY_API_KEY'),
+    ]
 ];

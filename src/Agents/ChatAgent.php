@@ -18,12 +18,12 @@ use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
 class ChatAgent implements ChatAgentInterface
 {
     /**
-     * @param \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider $model
+     * @param \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider $provider
      * @param array|\Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface $messages
      * @param array $tools
      */
     protected function __construct(
-        protected ChatbotProvider $model,
+        protected ChatbotProvider $provider,
         protected array|MessageStorageInterface $messages,
         protected array $tools
     ) {}
@@ -32,12 +32,12 @@ class ChatAgent implements ChatAgentInterface
      * @inheritDoc
      */
     public static function make(
-        ChatbotProvider $model,
+        ChatbotProvider $provider,
         array|MessageStorageInterface $messages,
         array $tools = []
     ): self
     {
-        return new self($model, $messages, $tools);
+        return new self($provider, $messages, $tools);
     }
 
     /**
@@ -100,7 +100,7 @@ class ChatAgent implements ChatAgentInterface
      */
     protected function createResource(): ChatResourceInterface
     {
-        return ChatbotHub::chat($this->model)
+        return ChatbotHub::chat($this->provider)
             ->withTools($this->tools)
             ->withMessages($this->messages);
     }

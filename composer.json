@@ -30,6 +30,7 @@
         "kcs/class-finder": "*",
         "livewire/livewire": "^3.5",
         "openai-php/client": "^0.10.1",
+        "softcreatr/php-perplexity-ai-sdk": "^2.0",
         "spatie/laravel-package-tools": "^1.16"
     },
     "require-dev": {

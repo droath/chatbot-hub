@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Responses;
 
-use OpenAI\Responses\Chat\CreateResponseChoice;
+use Illuminate\Support\Arr;
 
 /**
  * Define the chatbot hub response message.
@@ -20,8 +20,8 @@ final readonly class ChatbotHubResponseMessage
         return new self($message);
     }
 
-    public static function from(CreateResponseChoice $response): self
+    public static function fromArray(string $key, array $message): self
     {
-        return new self($response->message->content);
+        return new self(Arr::get($message, $key));
     }
 }

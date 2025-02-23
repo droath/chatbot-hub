@@ -7,43 +7,44 @@ namespace Droath\ChatbotHub\Resources;
 use OpenAI\Resources\Chat;
 use Illuminate\Support\Arr;
 use Droath\ChatbotHub\Tools\Tool;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use OpenAI\Responses\StreamResponse;
 use Droath\ChatbotHub\Drivers\Openai;
 use Droath\ChatbotHub\Enums\ChatbotRoles;
 use OpenAI\Responses\Chat\CreateResponse;
-use Illuminate\Contracts\Support\Arrayable;
 use OpenAI\Responses\Chat\CreateResponseChoice;
 use OpenAI\Responses\Chat\CreateResponseToolCall;
 use OpenAI\Responses\Chat\CreateStreamedResponse;
+use Droath\ChatbotHub\Resources\Concerns\WithTools;
 use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
+use Droath\ChatbotHub\Resources\Concerns\WithMessages;
 use OpenAI\Responses\Chat\CreateStreamedResponseChoice;
+use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
 use OpenAI\Responses\Chat\CreateStreamedResponseToolCall;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Resources\Concerns\WithResponseFormat;
+use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
-use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 
 /**
  * Define the openai chat resource.
  */
-class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
+class OpenaiChatResource implements ChatResourceInterface, HasToolsInterface, HasMessagesInterface, HasResponseFormatInterface, HasStreamingInterface
 {
-    protected array $responseFormat = [];
-
-    protected array|Collection $tools = [];
-
     protected string $model = Openai::DEFAULT_MODEL;
 
-    protected array|MessageStorageInterface $messages;
-
+    use WithTools;
     use HasStreaming;
+    use WithMessages;
+    use WithResponseFormat;
 
-    public function __construct(Chat $resource)
-    {
-        $this->resource = $resource;
-    }
+    public function __construct(
+        protected Chat $resource,
+        protected DriverInterface $driver
+    ) {}
 
     /**
      * {@inheritDoc}
@@ -51,36 +52,6 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
     public function withModel(string $model): static
     {
         $this->model = $model;
-
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function withTools(array $tools): static
-    {
-        $this->tools = collect($tools);
-
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function withResponseFormat(array $responseFormat): static
-    {
-        $this->responseFormat = $responseFormat;
-
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function withMessages(array|MessageStorageInterface $messages): static
-    {
-        $this->messages = $messages;
 
         return $this;
     }
@@ -142,34 +113,10 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
     {
         return array_filter([
             'model' => $this->model,
-            'tools' => $this->tools instanceof Collection
-                ? $this->tools->map(fn ($tool) => Openai::transformTool($tool))->toArray()
-                : $this->tools,
+            'tools' => $this->resolveTools(),
             'messages' => $this->resolveMessages(),
             'response_format' => $this->responseFormat,
         ]);
-    }
-
-    /**
-     * Resolve the chat messages.
-     */
-    protected function resolveMessages(): array
-    {
-        $messages = $this->messages;
-
-        if (is_array($messages)) {
-            foreach ($messages as &$message) {
-                if ($message instanceof Arrayable) {
-                    $message = $message->toArray();
-                }
-            }
-        }
-
-        if ($messages instanceof MessageStorageInterface) {
-            $messages = $this->messages->toArray();
-        }
-
-        return array_filter($messages);
     }
 
     /**
@@ -275,7 +222,9 @@ class OpenaiChatResource implements ChatResourceInterface, HasStreamingInterface
             }
         }
 
-        return ChatbotHubResponseMessage::from($response->choices[0]);
+        return ChatbotHubResponseMessage::fromString(
+            $response->choices[0]->message->content
+        );
     }
 
     /**

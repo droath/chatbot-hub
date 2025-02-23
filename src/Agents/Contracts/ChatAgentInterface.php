@@ -11,14 +11,14 @@ use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
 interface ChatAgentInterface extends AgentInterface
 {
     /**
-     * @param \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider $model
+     * @param \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider $provider
      * @param array|\Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface $messages
      * @param array $tools
      *
      * @return self
      */
     public static function make(
-        ChatbotProvider $model,
+        ChatbotProvider $provider,
         array|MessageStorageInterface $messages,
         array $tools = []
     ): self;
