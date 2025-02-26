@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub\Resources;
 
 use OpenAI\Resources\Chat;
+use Illuminate\Support\Arr;
 use Droath\ChatbotHub\Tools\Tool;
 use Illuminate\Support\Facades\Log;
+use OpenAI\Responses\StreamResponse;
 use Droath\ChatbotHub\Drivers\Openai;
 use Droath\ChatbotHub\Enums\ChatbotRoles;
 use OpenAI\Responses\Chat\CreateResponse;
@@ -214,7 +216,7 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
         foreach ($response->choices as $choice) {
             if (
                 $this->isToolCall($choice)
-                && $response = $this->handleToolCall($choice)
+                && ($response = $this->handleToolCall($choice))
             ) {
                 $this->handleResponse($response);
             }
@@ -289,7 +291,7 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
 
             if ($finishReason === 'tool_calls'
                 && ! empty($streamToolCalls)
-                && $choice = CreateStreamedResponseChoice::from($streamToolCalls)
+                && ($choice = CreateStreamedResponseChoice::from($streamToolCalls))
             ) {
                 $toolCallResponse = $this->handleToolCall($choice);
 

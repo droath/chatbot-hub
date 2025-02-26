@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Agents;
 
-use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
-use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Facades\ChatbotHub;
-use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
 use Droath\ChatbotHub\Messages\UserMessage;
-use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
+use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
 
 /**
  * Define a chat agent class implementation.
@@ -30,7 +30,8 @@ class ChatAgent implements ChatAgentInterface
         ChatbotProvider $provider,
         array|MessageStorageInterface $messages,
         array $tools = []
-    ): self {
+    ): self
+    {
         return new self($provider, $messages, $tools);
     }
 
@@ -67,7 +68,7 @@ class ChatAgent implements ChatAgentInterface
     }
 
     /**
-     * @inheritDoc}
+     * {@inheritDoc}
      */
     public function addMessages(array $messages): static
     {

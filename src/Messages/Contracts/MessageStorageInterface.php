@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Messages\Contracts;
 
-use Droath\ChatbotHub\Messages\AssistantMessage;
-use Droath\ChatbotHub\Messages\SystemMessage;
+use Illuminate\Contracts\Support\Arrayable;
 use Droath\ChatbotHub\Messages\UserMessage;
+use Droath\ChatbotHub\Messages\SystemMessage;
+use Droath\ChatbotHub\Messages\AssistantMessage;
 
 /**
  * Define the message storage interface.
  */
-interface MessageStorageInterface
+interface MessageStorageInterface extends Arrayable
 {
     /**
      * Get the message object.
