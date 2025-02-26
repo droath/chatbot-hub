@@ -1,6 +1,6 @@
 {
     "name": "droath/chatbot-hub",
-    "description": "This is my package chatbot-hub",
+    "description": "Chatbot Hub is a package that provides chatbot functionality in a unified manner regardless of the LLM provider.",
     "keywords": [
         "LLM",
         "chat",
@@ -17,17 +17,10 @@
             "role": "Developer"
         }
     ],
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../plugin-manager"
-        }
-    ],
     "require": {
         "php": "^8.2",
-        "droath/plugin-manager": "dev-main",
+        "droath/plugin-manager": "^1.0",
         "illuminate/contracts": "^10.0||^11.0",
-        "kcs/class-finder": "*",
         "livewire/livewire": "^3.5",
         "openai-php/client": "^0.10.1",
         "softcreatr/php-perplexity-ai-sdk": "^2.0",
