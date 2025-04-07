@@ -20,7 +20,8 @@ class ChatAgent implements ChatAgentInterface
     protected function __construct(
         protected ChatbotProvider $provider,
         protected array|MessageStorageInterface $messages,
-        protected array $tools
+        protected array $tools,
+        protected array $responseFormat
     ) {}
 
     /**
@@ -29,10 +30,11 @@ class ChatAgent implements ChatAgentInterface
     public static function make(
         ChatbotProvider $provider,
         array|MessageStorageInterface $messages,
-        array $tools = []
+        array $tools = [],
+        array $responseFormat = []
     ): self
     {
-        return new self($provider, $messages, $tools);
+        return new self($provider, $messages, $tools, $responseFormat);
     }
 
     /**
@@ -74,10 +76,20 @@ class ChatAgent implements ChatAgentInterface
     {
         foreach ($messages as $message) {
             if (! $message instanceof UserMessage) {
-                continue;
+                $message = UserMessage::make($message);
             }
             $this->addMessage($message);
         }
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function addResponseFormat(array $responseFormat): static
+    {
+        $this->responseFormat = $responseFormat;
 
         return $this;
     }
@@ -90,10 +102,14 @@ class ChatAgent implements ChatAgentInterface
         return $this->createResource()->__invoke();
     }
 
+    /**
+     * @return \Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface
+     */
     protected function createResource(): ChatResourceInterface
     {
         return ChatbotHub::chat($this->provider)
             ->withTools($this->tools)
-            ->withMessages($this->messages);
+            ->withMessages($this->messages)
+            ->withResponseFormat($this->responseFormat);
     }
 }

@@ -5,17 +5,20 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub\Plugins\AgentWorker;
 
 use Droath\ChatbotHub\Agents\ChatAgent;
-use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
-use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
-use Droath\ChatbotHub\Messages\SystemMessage;
-use Droath\ChatbotHub\Plugins\Contracts\ChatAgentPluginWorkerInterface;
 use Droath\PluginManager\Plugin\BasePlugin;
+use Droath\ChatbotHub\Messages\SystemMessage;
+use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
+use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
+use Droath\ChatbotHub\Plugins\Contracts\ChatAgentPluginWorkerInterface;
 
 /**
  * Define the agent worker plugin base.
  */
 abstract class ChatAgentWorkerPlugin extends BasePlugin implements ChatAgentPluginWorkerInterface
 {
+    /**
+     * @var \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider
+     */
     protected ChatbotProvider $defaultProvider = ChatbotProvider::OPENAI;
 
     /**
@@ -27,11 +30,12 @@ abstract class ChatAgentWorkerPlugin extends BasePlugin implements ChatAgentPlug
             $this->provider(),
             $this->messages(),
             $this->tools(),
+            $this->responseFormat()
         );
     }
 
     /**
-     * Get the agent worker plugin tools.
+     * Define the agent default tools.
      */
     protected function tools(): array
     {
@@ -49,12 +53,27 @@ abstract class ChatAgentWorkerPlugin extends BasePlugin implements ChatAgentPlug
     }
 
     /**
+     * Define the agent worker response format.
+     *
+     * @return array
+     */
+    protected function responseFormat(): array
+    {
+        return [];
+    }
+
+    /**
      * Get the agent worker plugin provider.
      */
     protected function provider(): ?ChatbotProvider
     {
-        return ChatbotProvider::tryFrom($this->pluginDefinition['provider'])
-            ?? $this->defaultProvider;
+        $provider = $this->pluginDefinition['provider'] ?? null;
+
+        if ($provider instanceof ChatbotProvider) {
+            return $provider;
+        }
+
+        return $this->defaultProvider;
     }
 
     /**
