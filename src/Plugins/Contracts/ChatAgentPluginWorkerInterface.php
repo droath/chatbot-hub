@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Plugins\Contracts;
 
+use Droath\ChatbotHub\Messages\SystemMessage;
 use Droath\PluginManager\Contracts\PluginInterface;
-use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
 
 /**
  * Define the agent plugin worker interface.
@@ -13,20 +13,19 @@ use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
 interface ChatAgentPluginWorkerInterface extends PluginInterface
 {
     /**
-     * Get chat agent response.
+     * Invoke the chat agent response.
      *
      * @param array $messages
+     *   An array of messages to send to the chat agent.
      * @param array $tools
+     *   An array of tools to send to the chat agent.
      *
      * @return mixed
      */
-    public function response(
-        array $messages = [],
-        array $tools = []
-    ): mixed;
+    public function response(array $messages = [], array $tools = []): mixed;
 
     /**
-     * Create a chat agent instance.
+     * Define the chat agent system message.
      */
-    public function createAgent(): ChatAgentInterface;
+    public function systemInstruction(): SystemMessage;
 }
