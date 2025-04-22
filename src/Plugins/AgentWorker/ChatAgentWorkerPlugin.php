@@ -135,16 +135,34 @@ abstract class ChatAgentWorkerPlugin extends PluginBase implements ChatAgentPlug
         ChatbotHubResponseMessage $response
     ): string|array
     {
-        if (Str::isJson($response->message)) {
+        $message = $this->normalizeResponseMessage(
+            $response->message
+        );
+
+        if (Str::isJson($message)) {
             return json_decode(
-                $response->message,
+                $message,
                 true,
                 512,
                 JSON_THROW_ON_ERROR
             );
         }
 
-        return $response->message;
+        return $message;
+    }
+
+    /**
+     * Normalize the response message.
+     *
+     * @param array|string $message
+     *
+     * @return array|string
+     */
+    protected function normalizeResponseMessage(
+        array|string $message
+    ): array|string
+    {
+        return $message;
     }
 
     /**

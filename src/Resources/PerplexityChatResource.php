@@ -10,15 +10,18 @@ use SoftCreatR\PerplexityAI\PerplexityAI;
 use Droath\ChatbotHub\Resources\Concerns\WithMessages;
 use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Resources\Concerns\WithResponseFormat;
 use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 
 /**
  * Define the Perplexity chat resource.
  */
-class PerplexityChatResource implements ChatResourceInterface, HasMessagesInterface
+class PerplexityChatResource implements ChatResourceInterface, HasMessagesInterface, HasResponseFormatInterface
 {
     use WithMessages;
+    use withResponseFormat;
 
     protected string $model = Perplexity::DEFAULT_MODEL;
 
@@ -67,10 +70,38 @@ class PerplexityChatResource implements ChatResourceInterface, HasMessagesInterf
     {
         return array_filter([
             'model' => $this->model,
-            'messages' => $this->resolveMessages(),
+            'messages' => $this->mergeConsecutiveMessages(),
         ]);
     }
 
+    /**
+     * Merge consecutive messages.
+     *
+     * This is a workaround for Perplexity API, which doesn't allow consecutive
+     * messages with the same role.
+     *
+     * @return array
+     */
+    protected function mergeConsecutiveMessages(): array
+    {
+        return collect($this->resolveMessages())
+            ->reduce(function ($carry, $message) {
+                if (empty($carry) || end($carry)['role'] !== $message['role']) {
+                    $carry[] = $message;
+                } else {
+                    $lastIndex = count($carry) - 1;
+                    $carry[$lastIndex]['content'] .= "\r\n{$message['content']}";
+                }
+
+                return $carry;
+            }, []);
+    }
+
+    /**
+     * @param \Psr\Http\Message\ResponseInterface $response
+     *
+     * @return array
+     */
     protected function formatJsonFromResponse(ResponseInterface $response): array
     {
         $content = $response->getBody()->getContents();

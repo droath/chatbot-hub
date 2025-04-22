@@ -9,8 +9,11 @@ use Droath\ChatbotHub\Messages\UserMessage;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
 use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 
 /**
  * Define a chat agent class implementation.
@@ -107,9 +110,20 @@ class ChatAgent implements ChatAgentInterface
      */
     protected function createResource(): ChatResourceInterface
     {
-        return ChatbotHub::chat($this->provider)
-            ->withTools($this->tools)
-            ->withMessages($this->messages)
-            ->withResponseFormat($this->responseFormat);
+        $resource = ChatbotHub::chat($this->provider);
+
+        if ($resource instanceof HasToolsInterface) {
+            $resource->withTools($this->tools);
+        }
+
+        if ($resource instanceof HasMessagesInterface) {
+            $resource->withMessages($this->messages);
+        }
+
+        if ($resource instanceof HasResponseFormatInterface) {
+            $resource->withResponseFormat($this->responseFormat);
+        }
+
+        return $resource;
     }
 }

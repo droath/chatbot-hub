@@ -7,7 +7,7 @@ enum ChatbotProvider: string
     case OPENAI = 'openai';
     case PERPLEXITY = 'perplexity';
 
-    public function options(): array
+    public static function options(): array
     {
         return [
             self::OPENAI->value => 'OpenAI',
