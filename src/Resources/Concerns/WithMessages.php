@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Resources\Concerns;
 
-use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
 use Illuminate\Contracts\Support\Arrayable;
+use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
+use Droath\ChatbotHub\Messages\Contracts\MessageDriverAwareInterface;
 
 trait WithMessages
 {
+    /**
+     * @var array|\Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface
+     */
     protected array|MessageStorageInterface $messages;
 
     /**
@@ -30,6 +34,9 @@ trait WithMessages
 
         if (is_array($messages)) {
             foreach ($messages as &$message) {
+                if ($message instanceof MessageDriverAwareInterface) {
+                    $message->setDriver($this->driver);
+                }
                 if ($message instanceof Arrayable) {
                     $message = $message->toArray();
                 }

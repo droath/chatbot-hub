@@ -24,27 +24,40 @@ use OpenAI\Responses\Chat\CreateStreamedResponseToolCall;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Resources\Concerns\WithResponseFormat;
 use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasDriverInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 
 /**
- * Define the openai chat resource.
+ * Define the OpenAI chat resource.
  */
-class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface, HasResponseFormatInterface, HasStreamingInterface, HasToolsInterface
+class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface, HasResponseFormatInterface, HasStreamingInterface, HasToolsInterface, HasDriverInterface
 {
     protected string $model = Openai::DEFAULT_MODEL;
 
+    use WithTools;
     use HasStreaming;
     use WithMessages;
     use WithResponseFormat;
-    use WithTools;
 
+    /**
+     * @param \OpenAI\Resources\Chat $resource
+     * @param \Droath\ChatbotHub\Drivers\Contracts\DriverInterface $driver
+     */
     public function __construct(
         protected Chat $resource,
         protected DriverInterface $driver
     ) {}
+
+    /**
+     * @inheritDoc
+     */
+    public function driver(): DriverInterface
+    {
+        return $this->driver;
+    }
 
     /**
      * {@inheritDoc}
@@ -57,7 +70,7 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
     }
 
     /**
-     * The openai chat resource invoke process.
+     * @inheritDoc
      */
     public function __invoke(): ?ChatbotHubResponseMessage
     {

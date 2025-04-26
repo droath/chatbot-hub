@@ -6,12 +6,19 @@ namespace Droath\ChatbotHub\Messages;
 
 use Droath\ChatbotHub\Enums\ChatbotRoles;
 use Illuminate\Contracts\Support\Arrayable;
+use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
+use Droath\ChatbotHub\Messages\Contracts\MessageDriverAwareInterface;
 
 /**
  * Define the user message value object.
  */
-final readonly class UserMessage implements Arrayable
+final readonly class UserMessage implements Arrayable, MessageDriverAwareInterface
 {
+    /**
+     * @var \Droath\ChatbotHub\Drivers\Contracts\DriverInterface|null
+     */
+    protected ?DriverInterface $driver;
+
     private function __construct(
         public string $content,
     ) {}
@@ -21,11 +28,38 @@ final readonly class UserMessage implements Arrayable
         return new self($content);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function toArray(): array
     {
         return [
             'role' => ChatbotRoles::USER->value,
-            'content' => $this->content,
+            'content' => $this->structureContent(),
         ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setDriver(DriverInterface $driver): void
+    {
+        $this->driver = $driver;
+    }
+
+    /**
+     * @return string|array
+     */
+    protected function structureContent(): string|array
+    {
+        $content = $this->content;
+
+        if ($this->driver instanceof DriverInterface) {
+            return $this->driver::transformUserMessage(
+                $content
+            );
+        }
+
+        return $content;
     }
 }

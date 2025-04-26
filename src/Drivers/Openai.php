@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Drivers;
 
+use OpenAI\Client;
+use Illuminate\Support\Str;
+use OpenAI\Resources\Embeddings;
+use Droath\ChatbotHub\Tools\Tool;
+use Illuminate\Support\Collection;
+use Droath\ChatbotHub\Tools\ToolProperty;
+use Droath\ChatbotHub\Resources\OpenaiChatResource;
 use Droath\ChatbotHub\Drivers\Contracts\HasChatInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasEmbeddingInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
-use Droath\ChatbotHub\Resources\OpenaiChatResource;
-use Droath\ChatbotHub\Tools\Tool;
-use Droath\ChatbotHub\Tools\ToolProperty;
-use Illuminate\Support\Collection;
-use OpenAI\Client;
-use OpenAI\Resources\Embeddings;
 
 /**
- * Define the openai driver for chatbot hub.
+ * Define the OpenAI driver for chatbot hub.
  */
 class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingInterface
 {
@@ -26,7 +27,7 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingI
     ) {}
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public static function transformTool(Tool $tool): array
     {
@@ -46,9 +47,80 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingI
         ];
     }
 
+    /**
+     * @inheritDoc
+     */
+    public static function transformUserMessage(string $content): string|array
+    {
+        if (Str::isJson($content)) {
+            try {
+                $contents = [];
+                $parts = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+                foreach ($parts as $value) {
+                    if (Str::startsWith($value, 'data:text')) {
+                        $contents[] = [
+                            'type' => 'text',
+                            'text' => static::decodeBase64DataUri($value),
+                        ];
+                    }
+
+                    if (Str::startsWith($value, 'data:image')) {
+                        $contents[] = [
+                            'type' => 'image_url',
+                            'image_url' => [
+                                'url' => $value,
+                            ],
+                        ];
+                    }
+
+                    if (Str::startsWith($value, ['data:application'])) {
+                        $contents[] = [
+                            'type' => 'file',
+                            'file' => [
+                                'file_data' => $value,
+                            ]
+                        ];
+                    }
+                }
+            } catch (\JsonException) {
+                return [];
+            }
+
+            return $contents;
+        }
+
+        return $content;
+    }
+
+    /**
+     * @param string $uri
+     *
+     * @return string|null
+     */
+    protected static function decodeBase64DataUri(string $uri): ?string
+    {
+        preg_match('/^data:([^;]+);base64,(.+)$/i', $uri, $matches);
+
+        array_shift($matches);
+
+        if (! empty($matches)) {
+            [$mimeType, $data] = $matches;
+            return base64_decode($data);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Illuminate\Support\Collection $properties
+     *
+     * @return array
+     */
     protected static function transformToolProperties(
         Collection $properties
-    ): array {
+    ): array
+    {
         return $properties->flatMap(function (ToolProperty $property) {
             $data = $property->toArray();
 
