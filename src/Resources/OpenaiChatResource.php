@@ -16,6 +16,7 @@ use OpenAI\Responses\Chat\CreateResponseChoice;
 use OpenAI\Responses\Chat\CreateResponseToolCall;
 use OpenAI\Responses\Chat\CreateStreamedResponse;
 use Droath\ChatbotHub\Resources\Concerns\WithTools;
+use Droath\ChatbotHub\Resources\Concerns\WithModel;
 use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
 use Droath\ChatbotHub\Resources\Concerns\WithMessages;
 use OpenAI\Responses\Chat\CreateStreamedResponseChoice;
@@ -35,9 +36,13 @@ use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
  */
 class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface, HasResponseFormatInterface, HasStreamingInterface, HasToolsInterface, HasDriverInterface
 {
+    /**
+     * @var string
+     */
     protected string $model = Openai::DEFAULT_MODEL;
 
     use WithTools;
+    use WithModel;
     use HasStreaming;
     use WithMessages;
     use WithResponseFormat;
@@ -57,16 +62,6 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
     public function driver(): DriverInterface
     {
         return $this->driver;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function withModel(string $model): static
-    {
-        $this->model = $model;
-
-        return $this;
     }
 
     /**

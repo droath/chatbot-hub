@@ -6,22 +6,30 @@ namespace Droath\ChatbotHub\Drivers;
 
 use OpenAI\Client;
 use Illuminate\Support\Str;
-use OpenAI\Resources\Embeddings;
 use Droath\ChatbotHub\Tools\Tool;
 use Illuminate\Support\Collection;
 use Droath\ChatbotHub\Tools\ToolProperty;
 use Droath\ChatbotHub\Resources\OpenaiChatResource;
+use Droath\ChatbotHub\Resources\OpenaiEmbeddingResource;
 use Droath\ChatbotHub\Drivers\Contracts\HasChatInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasEmbeddingInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Resources\Contracts\EmbeddingsResourceInterface;
 
 /**
  * Define the OpenAI driver for chatbot hub.
  */
 class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingInterface
 {
+    /** @var string */
     public const string DEFAULT_MODEL = 'gpt-4o-mini';
 
+    /** @var string */
+    public const string DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small';
+
+    /**
+     * @param \OpenAI\Client $client
+     */
     public function __construct(
         protected Client $client
     ) {}
@@ -152,8 +160,11 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingI
     /**
      * {@inheritDoc}
      */
-    public function embeddings(): Embeddings
+    public function embeddings(): EmbeddingsResourceInterface
     {
-        return $this->client->embeddings();
+        return new OpenaiEmbeddingResource(
+            $this->client->embeddings(),
+            $this
+        );
     }
 }
