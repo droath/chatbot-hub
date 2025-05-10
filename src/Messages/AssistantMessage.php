@@ -5,22 +5,15 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub\Messages;
 
 use Droath\ChatbotHub\Enums\ChatbotRoles;
-use Illuminate\Contracts\Support\Arrayable;
 
 /**
  * Define the assistant message value object.
  */
-final readonly class AssistantMessage implements Arrayable
+final readonly class AssistantMessage extends MessageBase
 {
-    private function __construct(
-        public string $content,
-    ) {}
-
-    public static function make(string $content): self
-    {
-        return new self($content);
-    }
-
+    /**
+     * @inheritDoc
+     */
     public function toArray(): array
     {
         return [

@@ -5,27 +5,70 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub\Messages;
 
 use Droath\ChatbotHub\Enums\ChatbotRoles;
-use Illuminate\Contracts\Support\Arrayable;
 use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
 use Droath\ChatbotHub\Messages\Contracts\MessageDriverAwareInterface;
 
 /**
  * Define the user message value object.
  */
-final readonly class UserMessage implements Arrayable, MessageDriverAwareInterface
+final readonly class UserMessage extends MessageBase implements MessageDriverAwareInterface
 {
     /**
      * @var \Droath\ChatbotHub\Drivers\Contracts\DriverInterface|null
      */
     protected ?DriverInterface $driver;
 
+    /**
+     * @param string $content
+     * @param string|null $context
+     */
     private function __construct(
         public string $content,
+        public ?string $context,
     ) {}
 
-    public static function make(string $content): self
+    /**
+     * @param string $content
+     * @param string|null $context
+     *
+     * @return mixed
+     */
+    public static function make(
+        string $content,
+        ?string $context = null,
+    ): UserMessage
     {
-        return new self($content);
+        return new self($content, $context);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function fromLivewire($value): self
+    {
+        return self::make(
+            $value['content'],
+            $value['context']
+        );
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasContext(): bool
+    {
+        return ! empty($this->context);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function toLivewire(): array
+    {
+        return [
+            'content' => $this->content,
+            'context' => $this->context,
+        ];
     }
 
     /**
@@ -53,6 +96,10 @@ final readonly class UserMessage implements Arrayable, MessageDriverAwareInterfa
     protected function structureContent(): string|array
     {
         $content = $this->content;
+
+        if (! empty($this->context)) {
+            $content .= $this->context;
+        }
 
         if ($this->driver instanceof DriverInterface) {
             return $this->driver::transformUserMessage(
