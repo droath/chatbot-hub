@@ -6,7 +6,6 @@ namespace Droath\ChatbotHub\Agents\Contracts;
 
 use Droath\ChatbotHub\Messages\UserMessage;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
-use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
 
 interface ChatAgentInterface extends AgentInterface
 {
@@ -14,19 +13,19 @@ interface ChatAgentInterface extends AgentInterface
      * Create the chat agent instance.
      *
      * @param \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider $provider
-     * @param array|\Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface $messages
+     * @param array $messages
      * @param array $tools
      *
      * @return self
      */
     public static function make(
         ChatbotProvider $provider,
-        array|MessageStorageInterface $messages,
+        array $messages,
         array $tools = []
     ): self;
 
     /**
-     * Add tool to the chat agent instance.
+     * Add a tool to the chat agent instance.
      *
      * @return $this
      */

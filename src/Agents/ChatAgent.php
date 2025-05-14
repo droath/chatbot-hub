@@ -12,7 +12,6 @@ use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
-use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 
 /**
@@ -22,7 +21,7 @@ class ChatAgent implements ChatAgentInterface
 {
     protected function __construct(
         protected ChatbotProvider $provider,
-        protected array|MessageStorageInterface $messages,
+        protected array $messages,
         protected array $tools,
         protected array $responseFormat
     ) {}
@@ -32,7 +31,7 @@ class ChatAgent implements ChatAgentInterface
      */
     public static function make(
         ChatbotProvider $provider,
-        array|MessageStorageInterface $messages,
+        array $messages,
         array $tools = [],
         array $responseFormat = []
     ): self

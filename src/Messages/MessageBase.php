@@ -7,13 +7,13 @@ namespace Droath\ChatbotHub\Messages;
 use Livewire\Wireable;
 use Illuminate\Contracts\Support\Arrayable;
 
-abstract readonly class MessageBase implements Wireable, Arrayable
+abstract class MessageBase implements Wireable, Arrayable
 {
     /**
      * @param string $content
      */
     private function __construct(
-        public string $content,
+        public readonly string $content,
     ) {}
 
     /**
@@ -29,6 +29,18 @@ abstract readonly class MessageBase implements Wireable, Arrayable
     }
 
     /**
+     * @param array $value
+     *
+     * @return self
+     */
+    public static function fromValue(array $value): mixed
+    {
+        return static::make(
+            $value['content'],
+        );
+    }
+
+    /**
      * @param string $content
      *
      * @return static
@@ -38,6 +50,14 @@ abstract readonly class MessageBase implements Wireable, Arrayable
     ): mixed
     {
         return new static($content);
+    }
+
+    /**
+     * @return array
+     */
+    public function toValue(): array
+    {
+        return $this->toArray();
     }
 
     /**

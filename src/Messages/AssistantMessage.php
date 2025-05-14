@@ -9,7 +9,7 @@ use Droath\ChatbotHub\Enums\ChatbotRoles;
 /**
  * Define the assistant message value object.
  */
-final readonly class AssistantMessage extends MessageBase
+final class AssistantMessage extends MessageBase
 {
     /**
      * @inheritDoc

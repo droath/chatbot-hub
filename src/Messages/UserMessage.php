@@ -11,20 +11,20 @@ use Droath\ChatbotHub\Messages\Contracts\MessageDriverAwareInterface;
 /**
  * Define the user message value object.
  */
-final readonly class UserMessage extends MessageBase implements MessageDriverAwareInterface
+final class UserMessage extends MessageBase implements MessageDriverAwareInterface
 {
     /**
      * @var \Droath\ChatbotHub\Drivers\Contracts\DriverInterface|null
      */
-    protected ?DriverInterface $driver;
+    protected ?DriverInterface $driver = null;
 
     /**
      * @param string $content
      * @param string|null $context
      */
     private function __construct(
-        public string $content,
-        public ?string $context,
+        public readonly string $content,
+        public readonly ?string $context,
     ) {}
 
     /**
@@ -48,8 +48,31 @@ final readonly class UserMessage extends MessageBase implements MessageDriverAwa
     {
         return self::make(
             $value['content'],
-            $value['context']
+            $value['context'] ?? null
         );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function fromValue(array $value): self
+    {
+        return self::make(
+            $value['content'],
+            $value['context'] ?? null
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function toValue(): array
+    {
+        return [
+            'role' => ChatbotRoles::USER->value,
+            'content' => $this->content,
+            'context' => $this->context,
+        ];
     }
 
     /**

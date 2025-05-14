@@ -9,7 +9,7 @@ use Droath\ChatbotHub\Enums\ChatbotRoles;
 /**
  * Define the system message value object.
  */
-final readonly class SystemMessage extends MessageBase
+final class SystemMessage extends MessageBase
 {
     /**
      * @inheritDoc

@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub\Resources\Concerns;
 
 use Illuminate\Contracts\Support\Arrayable;
-use Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface;
 use Droath\ChatbotHub\Messages\Contracts\MessageDriverAwareInterface;
+
 
 trait WithMessages
 {
     /**
-     * @var array|\Droath\ChatbotHub\Messages\Contracts\MessageStorageInterface
+     * @var array
      */
-    protected array|MessageStorageInterface $messages;
+    protected array $messages;
 
     /**
      * {@inheritDoc}
      */
-    public function withMessages(array|MessageStorageInterface $messages): static
+    public function withMessages(array $messages): static
     {
         $this->messages = $messages;
 
@@ -32,19 +32,13 @@ trait WithMessages
     {
         $messages = $this->messages;
 
-        if (is_array($messages)) {
-            foreach ($messages as &$message) {
-                if ($message instanceof MessageDriverAwareInterface) {
-                    $message->setDriver($this->driver);
-                }
-                if ($message instanceof Arrayable) {
-                    $message = $message->toArray();
-                }
+        foreach ($messages as &$message) {
+            if ($message instanceof MessageDriverAwareInterface) {
+                $message->setDriver($this->driver);
             }
-        }
-
-        if ($messages instanceof MessageStorageInterface) {
-            $messages = $this->messages->toArray();
+            if ($message instanceof Arrayable) {
+                $message = $message->toArray();
+            }
         }
 
         return array_filter($messages);
