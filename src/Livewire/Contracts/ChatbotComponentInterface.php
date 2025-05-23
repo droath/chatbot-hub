@@ -9,9 +9,9 @@ interface ChatbotComponentInterface
     /**
      * Send the user's message.
      *
-     * @return void
+     * @return bool
      */
-    public function sendMessage(): void;
+    public function sendMessage(): bool;
 
     /**
      * Clear the chatbot messages.

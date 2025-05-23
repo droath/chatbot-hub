@@ -51,7 +51,7 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
     /**
      * @inheritDoc
      */
-    public function sendMessage(): void
+    public function sendMessage(): bool
     {
         if ($message = $this->pull('message')) {
             if (empty($this->messages)) {
@@ -61,7 +61,11 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
                 $message,
                 $this->userMessageContext($message)
             );
+
+            return true;
         }
+
+        return false;
     }
 
     /**
