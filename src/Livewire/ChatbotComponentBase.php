@@ -88,30 +88,101 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
         $resource = ChatbotHub::chat(static::CHATBOT_PROVIDER)
             ->withModel(static::CHATBOT_DEFAULT_MODEL)
             ->withMessages($this->messages)
-            ->usingStream(function (string $partial, $initialized) {
-                $this->stream(
-                    'streamMessage',
-                    $partial,
-                    $initialized
-                );
-            }, function (ChatbotHubResponseMessage $response) {
-                $this->messages[] = AssistantMessage::make($response->message);
-
-                if ($this->parent instanceof Model) {
-                    ChatbotMessages::updateOrCreate(
-                        [
-                            'user_id' => auth()->id(),
-                            'parent_id' => $this->parent->id,
-                            'parent_type' => $this->parent->getMorphClass(),
-                        ],
-                        [
-                            'message' => $this->messages
-                        ]
-                    );
+            ->usingStreamBuffer(
+                function (string $partial, bool $initialized) {
+                    $this->streamProcessing($partial, $initialized);
+                },
+                function (string $partial) {
+                    return $this->streamBufferProcessing($partial);
+                },
+                function (ChatbotHubResponseMessage $response) {
+                    $this->streamFinishedProcessing($response);
                 }
-            });
+            );
 
         $resource();
+    }
+
+    /**
+     * Handles the stream processing
+     *
+     * @param string $partial
+     *   The partial stream data.
+     * @param bool $initialized
+     *   A flag denoting if the stream is initialized.
+     *
+     * @return void
+     */
+    protected function streamProcessing(
+        string $partial,
+        bool $initialized
+    ): void
+    {
+        $this->stream(
+            'streamMessage',
+            $this->formatStreamData($partial),
+            $initialized
+        );
+    }
+
+    /**
+     * Controls the processing of the stream buffer.
+     *
+     * Determines when the stream buffer should be processed to ensure
+     * data is handled in consistent chunks rather than arbitrary fragments.
+     *
+     * @param string $partial
+     *   The partial stream data to evaluate
+     *
+     * @return bool
+     *   Whether the buffer should be processed
+     */
+    protected function streamBufferProcessing(
+        string $partial
+    ): bool
+    {
+        return true;
+    }
+
+    /**
+     * Handles the stream finished processing.
+     *
+     * @param \Droath\ChatbotHub\Responses\ChatbotHubResponseMessage $response
+     *   The chatbot hub response message.
+     *
+     * @return void
+     */
+    protected function streamFinishedProcessing(
+        ChatbotHubResponseMessage $response
+    ): void
+    {
+        $this->messages[] = AssistantMessage::make($response->message);
+
+        if ($this->parent instanceof Model) {
+            ChatbotMessages::updateOrCreate(
+                [
+                    'user_id' => auth()->id(),
+                    'parent_id' => $this->parent->id,
+                    'parent_type' => $this->parent->getMorphClass(),
+                ],
+                [
+                    'message' => $this->messages
+                ]
+            );
+        }
+    }
+
+    /**
+     * Format the partial stream data.
+     *
+     * @param string $partial
+     *   The partial stream data.
+     *
+     * @return string
+     */
+    protected function formatStreamData(string $partial): string
+    {
+        return $partial;
     }
 
     /**

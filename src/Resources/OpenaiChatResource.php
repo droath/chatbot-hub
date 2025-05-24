@@ -97,14 +97,14 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
     ): ?string
     {
         if ($chunk = $response->choices[0]->delta->content) {
-            $processCallable = $this->streamProcess;
+            $processorMethod = $this->useStreamBuffer
+                ? 'handleStreamBufferProcess'
+                : 'handleStreamProcess';
 
-            if (is_callable($processCallable)) {
-                $initialized = is_null($streamContent);
-
-                $processCallable(
+            if (method_exists($this, $processorMethod)) {
+                $this->$processorMethod(
                     $chunk,
-                    $initialized
+                    $streamContent
                 );
             }
 
@@ -112,6 +112,67 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
         }
 
         return $streamContent;
+    }
+
+    /**
+     * Handle the standard stream process.
+     *
+     * @param string $chunk
+     * @param string|null $streamContent
+     *
+     * @return void
+     */
+    protected function handleStreamProcess(
+        string $chunk,
+        ?string $streamContent
+    ): void
+    {
+        $streamProcess = $this->streamProcess;
+
+        if (is_callable($streamProcess)) {
+            $partial = $chunk;
+            $initialized = is_null($streamContent);
+
+            $streamProcess(
+                $partial,
+                $initialized,
+            );
+        }
+    }
+
+    /**
+     * Handle the stream buffer process.
+     *
+     * @param string $chunk
+     * @param string|null $streamContent
+     *
+     * @return void
+     */
+    protected function handleStreamBufferProcess(
+        string $chunk,
+        ?string $streamContent
+    ): void
+    {
+        $streamBufferProcess = $this->streamBufferProcess;
+
+        if (
+            is_callable($streamBufferProcess)
+            && $streamBufferProcess(
+                $chunk,
+                $this->streamBuffer
+            )
+        ) {
+            $partial = $this->streamBuffer . $chunk;
+
+            $this->handleStreamProcess(
+                $partial,
+                $streamContent
+            );
+
+            $this->streamBuffer = null;
+        } else {
+            $this->streamBuffer .= $chunk;
+        }
     }
 
     /**
@@ -277,7 +338,7 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
      * @throws \JsonException
      */
     protected function handleStream(
-        \Traversable $stream,
+        StreamResponse $stream,
     ): ?ChatbotHubResponseMessage
     {
         $streamContent = null;
