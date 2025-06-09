@@ -12,10 +12,12 @@ return new class extends Migration {
     {
         Schema::create('chatbot_messages', static function (Blueprint $table) {
             $table->id();
-            $table->morphs('parent');
+            $table->string('parent_id');
+            $table->string('parent_type');
             $table->jsonb('message')->nullable();
             $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
             $table->timestamps();
+            $table->index(['parent_id', 'parent_type']);
         });
     }
 

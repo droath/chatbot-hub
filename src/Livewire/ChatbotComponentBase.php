@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Droath\ChatbotHub\Messages\UserMessage;
 use Droath\ChatbotHub\Messages\SystemMessage;
 use Droath\ChatbotHub\Models\ChatbotMessages;
+use Droath\ChatbotHub\Messages\MessageContext;
 use Droath\ChatbotHub\Messages\AssistantMessage;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
@@ -57,9 +58,11 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
             if (empty($this->messages)) {
                 $this->messages[] = $this->systemMessage();
             }
+            $context = $this->userMessageContext($message);
+
             $this->messages[] = UserMessage::make(
                 $message,
-                $this->userMessageContext($message)
+                $context
             );
 
             return true;
@@ -162,7 +165,7 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
             ChatbotMessages::updateOrCreate(
                 [
                     'user_id' => auth()->id(),
-                    'parent_id' => $this->parent->id,
+                    'parent_id' => $this->parent->getKey(),
                     'parent_type' => $this->parent->getMorphClass(),
                 ],
                 [
@@ -209,7 +212,7 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
         }
 
         return ChatbotMessages::where('user_id', auth()->id())
-            ->where('parent_id', $this->parent->id)
+            ->where('parent_id', $this->parent->getKey())
             ->where('parent_type', $this->parent->getMorphClass());
     }
 
@@ -223,9 +226,9 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
      *
      * @param string $message
      *
-     * @return string|null
+     * @return \Droath\ChatbotHub\Messages\MessageContext|null
      */
-    protected function userMessageContext(string $message): ?string
+    protected function userMessageContext(string $message): ?MessageContext
     {
         return null;
     }

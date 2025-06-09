@@ -20,25 +20,30 @@ final class UserMessage extends MessageBase implements MessageDriverAwareInterfa
 
     /**
      * @param string $content
-     * @param string|null $context
+     * @param \Droath\ChatbotHub\Messages\MessageContext|null $context
      */
     private function __construct(
         public readonly string $content,
-        public readonly ?string $context,
+        public readonly ?MessageContext $context,
     ) {}
 
     /**
      * @param string $content
-     * @param string|null $context
+     * @param \Droath\ChatbotHub\Messages\MessageContext|string|null $context
      *
      * @return mixed
      */
     public static function make(
         string $content,
-        ?string $context = null,
+        null|string|MessageContext $context = null,
     ): UserMessage
     {
-        return new self($content, $context);
+        return new self(
+            $content,
+            is_string($context)
+                ? MessageContext::make($context)
+                : $context
+        );
     }
 
     /**
@@ -46,10 +51,7 @@ final class UserMessage extends MessageBase implements MessageDriverAwareInterfa
      */
     public static function fromLivewire($value): self
     {
-        return self::make(
-            $value['content'],
-            $value['context'] ?? null
-        );
+        return self::fromValue($value);
     }
 
     /**
@@ -59,7 +61,10 @@ final class UserMessage extends MessageBase implements MessageDriverAwareInterfa
     {
         return self::make(
             $value['content'],
-            $value['context'] ?? null
+            is_array($value['context']) ? MessageContext::make(
+                $value['context']['content'],
+                $value['context']['metadata'] ?? []
+            ) : $value['context']
         );
     }
 
@@ -120,8 +125,8 @@ final class UserMessage extends MessageBase implements MessageDriverAwareInterfa
     {
         $content = $this->content;
 
-        if (! empty($this->context)) {
-            $content .= $this->context;
+        if (! empty($this->context->content)) {
+            $content .= $this->context->content;
         }
 
         if ($this->driver instanceof DriverInterface) {
