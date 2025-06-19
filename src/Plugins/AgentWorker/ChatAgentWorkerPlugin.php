@@ -58,8 +58,19 @@ abstract class ChatAgentWorkerPlugin extends PluginBase implements ChatAgentPlug
             $this->provider(),
             $this->messages(),
             $this->tools(),
+            $this->model(),
             $this->responseFormat()
         );
+    }
+
+    /**
+     * Define the agent provider model.
+     *
+     * @return string|null
+     */
+    protected function model(): ?string
+    {
+        return null;
     }
 
     /**

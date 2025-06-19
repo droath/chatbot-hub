@@ -23,6 +23,7 @@ class ChatAgent implements ChatAgentInterface
         protected ChatbotProvider $provider,
         protected array $messages,
         protected array $tools,
+        protected ?string $model,
         protected array $responseFormat
     ) {}
 
@@ -33,10 +34,11 @@ class ChatAgent implements ChatAgentInterface
         ChatbotProvider $provider,
         array $messages,
         array $tools = [],
+        string $model = null,
         array $responseFormat = []
     ): self
     {
-        return new self($provider, $messages, $tools, $responseFormat);
+        return new self($provider, $messages, $tools, $model, $responseFormat);
     }
 
     /**
@@ -110,6 +112,10 @@ class ChatAgent implements ChatAgentInterface
     protected function createResource(): ChatResourceInterface
     {
         $resource = ChatbotHub::chat($this->provider);
+
+        if (! empty($this->model)) {
+            $resource->withModel($this->model);
+        }
 
         if ($resource instanceof HasToolsInterface) {
             $resource->withTools($this->tools);
