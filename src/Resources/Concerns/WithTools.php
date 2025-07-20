@@ -26,11 +26,9 @@ trait WithTools
     protected function resolveTools(): array
     {
         if ($this->tools instanceof Collection) {
-            return $this->tools->map(
-                function ($tool) {
-                    return $this->driver::transformTool($tool);
-                }
-            )->toArray();
+            return $this->tools->map(function ($tool) {
+                return $this->driver::transformTool($tool);
+            })->toArray();
         }
 
         return $this->tools;

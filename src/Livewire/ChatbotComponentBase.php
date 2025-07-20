@@ -17,6 +17,7 @@ use Droath\ChatbotHub\Messages\MessageContext;
 use Droath\ChatbotHub\Messages\AssistantMessage;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
 use Droath\ChatbotHub\Livewire\Contracts\ChatbotComponentInterface;
 
 abstract class ChatbotComponentBase extends Component implements ChatbotComponentInterface
@@ -103,7 +104,19 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
                 }
             );
 
+        if ($resource instanceof HasToolsInterface) {
+            $resource->withTools($this->tools());
+        }
+
         $resource();
+    }
+
+    /**
+     * @return array
+     */
+    protected function tools(): array
+    {
+        return [];
     }
 
     /**
