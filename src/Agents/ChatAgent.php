@@ -10,8 +10,8 @@ use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
+use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
-use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 
 /**
@@ -19,13 +19,26 @@ use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
  */
 class ChatAgent implements ChatAgentInterface
 {
+    /** @var \Droath\ChatbotHub\Resources\Contracts\ResourceInterface */
+    protected ResourceInterface $resource;
+
+    /**
+     * @param \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider $provider
+     * @param array $messages
+     * @param array $tools
+     * @param string|null $model
+     * @param array $responseFormat
+     */
     protected function __construct(
         protected ChatbotProvider $provider,
         protected array $messages,
         protected array $tools,
         protected ?string $model,
         protected array $responseFormat
-    ) {}
+    )
+    {
+        $this->resource = ChatbotHub::chat($this->provider);
+    }
 
     /**
      * {@inheritDoc}
@@ -39,6 +52,16 @@ class ChatAgent implements ChatAgentInterface
     ): self
     {
         return new self($provider, $messages, $tools, $model, $responseFormat);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setResourceInstance(ResourceInterface $resource): static
+    {
+        $this->resource = $resource;
+
+        return $this;
     }
 
     /**
@@ -107,28 +130,26 @@ class ChatAgent implements ChatAgentInterface
     }
 
     /**
-     * @return \Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface
+     * @return \Droath\ChatbotHub\Resources\Contracts\ResourceInterface
      */
-    protected function createResource(): ChatResourceInterface
+    protected function createResource(): ResourceInterface
     {
-        $resource = ChatbotHub::chat($this->provider);
-
         if (! empty($this->model)) {
-            $resource->withModel($this->model);
+            $this->resource->withModel($this->model);
         }
 
-        if ($resource instanceof HasToolsInterface) {
-            $resource->withTools($this->tools);
+        if ($this->resource instanceof HasToolsInterface) {
+            $this->resource->withTools($this->tools);
         }
 
-        if ($resource instanceof HasMessagesInterface) {
-            $resource->withMessages($this->messages);
+        if ($this->resource instanceof HasMessagesInterface) {
+            $this->resource->withMessages($this->messages);
         }
 
-        if ($resource instanceof HasResponseFormatInterface) {
-            $resource->withResponseFormat($this->responseFormat);
+        if ($this->resource instanceof HasResponseFormatInterface) {
+            $this->resource->withResponseFormat($this->responseFormat);
         }
 
-        return $resource;
+        return $this->resource;
     }
 }

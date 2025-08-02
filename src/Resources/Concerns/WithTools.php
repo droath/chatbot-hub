@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Resources\Concerns;
 
+use Droath\ChatbotHub\Tools\Tool;
 use Illuminate\Support\Collection;
 
 trait WithTools
@@ -27,7 +28,10 @@ trait WithTools
     {
         if ($this->tools instanceof Collection) {
             return $this->tools->map(function ($tool) {
-                return $this->driver::transformTool($tool);
+                if ($tool instanceof Tool) {
+                    return $this->driver::transformTool($tool);
+                }
+                return $tool;
             })->toArray();
         }
 

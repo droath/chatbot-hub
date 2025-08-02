@@ -6,7 +6,9 @@ use Droath\ChatbotHub\Facades\ChatbotHubClient;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Drivers\Contracts\HasChatInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasEmbeddingInterface;
+use Droath\ChatbotHub\Drivers\Contracts\HasResponsesInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Resources\Contracts\ResponsesResourceInterface;
 use Droath\ChatbotHub\Resources\Contracts\EmbeddingsResourceInterface;
 
 /**
@@ -33,6 +35,24 @@ class ChatbotHub
         }
 
         return $driver->chat();
+    }
+
+    /**
+     * @param \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider $provider
+     *
+     * @return \Droath\ChatbotHub\Resources\Contracts\ResponsesResourceInterface
+     */
+    public function responses(ChatbotProvider $provider): ResponsesResourceInterface
+    {
+        $driver = ChatbotHubClient::driver($provider->value);
+
+        if (! $driver instanceof HasResponsesInterface) {
+            throw new \RuntimeException(
+                'The driver does not support the response resource.'
+            );
+        }
+
+        return $driver->responses();
     }
 
     /**

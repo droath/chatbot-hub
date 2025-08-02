@@ -11,15 +11,18 @@ use Illuminate\Support\Collection;
 use Droath\ChatbotHub\Tools\ToolProperty;
 use Droath\ChatbotHub\Resources\OpenaiChatResource;
 use Droath\ChatbotHub\Resources\OpenaiEmbeddingResource;
+use Droath\ChatbotHub\Resources\OpenaiResponsesResource;
 use Droath\ChatbotHub\Drivers\Contracts\HasChatInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasEmbeddingInterface;
+use Droath\ChatbotHub\Drivers\Contracts\HasResponsesInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Resources\Contracts\ResponsesResourceInterface;
 use Droath\ChatbotHub\Resources\Contracts\EmbeddingsResourceInterface;
 
 /**
  * Define the OpenAI driver for chatbot hub.
  */
-class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingInterface
+class Openai extends ChatbotHubDriver implements HasChatInterface, HasResponsesInterface, HasEmbeddingInterface
 {
     /** @var string */
     public const string DEFAULT_MODEL = 'gpt-4o-mini';
@@ -153,6 +156,17 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingI
     {
         return new OpenaiChatResource(
             $this->client->chat(),
+            $this
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function responses(): ResponsesResourceInterface
+    {
+        return new OpenaiResponsesResource(
+            $this->client->responses(),
             $this
         );
     }

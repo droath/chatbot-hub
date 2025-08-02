@@ -7,10 +7,12 @@ namespace Droath\ChatbotHub\Plugins\AgentWorker;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Droath\ChatbotHub\Agents\ChatAgent;
+use Droath\ChatbotHub\Facades\ChatbotHub;
 use Droath\PluginManager\Plugin\PluginBase;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
 use Droath\ChatbotHub\Plugins\Contracts\ChatAgentPluginWorkerInterface;
 
 /**
@@ -60,7 +62,17 @@ abstract class ChatAgentWorkerPlugin extends PluginBase implements ChatAgentPlug
             $this->tools(),
             $this->model(),
             $this->responseFormat()
+        )->setResourceInstance(
+            $this->agentResourceInstance()
         );
+    }
+
+    /**
+     * @return \Droath\ChatbotHub\Resources\Contracts\ResourceInterface
+     */
+    protected function agentResourceInstance(): ResourceInterface
+    {
+        return ChatbotHub::chat($this->provider());
     }
 
     /**
