@@ -12,6 +12,7 @@ use OpenAI\Responses\StreamResponse;
 use Droath\ChatbotHub\Drivers\Openai;
 use Droath\ChatbotHub\Enums\ChatbotRoles;
 use OpenAI\Responses\Chat\CreateResponse;
+use Droath\ChatbotHub\Tools\ToolProperty;
 use OpenAI\Responses\Chat\CreateResponseChoice;
 use OpenAI\Responses\Chat\CreateResponseToolCall;
 use OpenAI\Responses\Chat\CreateStreamedResponse;
@@ -30,11 +31,12 @@ use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasToolTransformerInterface;
 
 /**
  * Define the OpenAI chat resource.
  */
-class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface, HasResponseFormatInterface, HasStreamingInterface, HasToolsInterface, HasDriverInterface
+class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface, HasResponseFormatInterface, HasStreamingInterface, HasToolsInterface, HasToolTransformerInterface, HasDriverInterface
 {
     /**
      * @var string
@@ -55,6 +57,46 @@ class OpenaiChatResource implements ChatResourceInterface, HasMessagesInterface,
         protected Chat $resource,
         protected DriverInterface $driver
     ) {}
+
+    /**
+     * @inheritDoc
+     */
+    public static function transformTool(Tool $tool): array
+    {
+        $data = $tool->toArray();
+
+        $definition = [
+            'type' => 'function',
+            'function' => [
+                'name' => $data['name'],
+                'strict' => $data['strict'] ?? false,
+            ],
+        ];
+
+        if ($tool->hasProperties()) {
+            $definition['function']['parameters'] = [
+                'type' => 'object',
+                'properties' => $data['properties']
+                    ->flatMap(function (ToolProperty $property) {
+                        $data = $property->toArray();
+
+                        if ($name = $data['name']) {
+                            return [
+                                $name => array_filter([
+                                    'type' => $data['type'],
+                                    'enum' => $data['enum'],
+                                    'description' => $data['description'],
+                                ]),
+                            ];
+                        }
+                        return [];
+                    })->toArray(),
+                'required' => $data['required'] ?? [],
+            ];
+        }
+
+        return $definition;
+    }
 
     /**
      * @inheritDoc

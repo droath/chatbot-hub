@@ -4,29 +4,26 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Resources;
 
-use Illuminate\Support\Arr;
 use OpenAI\Resources\Responses;
 use Droath\ChatbotHub\Tools\Tool;
 use Illuminate\Support\Facades\Log;
 use OpenAI\Responses\StreamResponse;
 use Droath\ChatbotHub\Drivers\Openai;
-use Droath\ChatbotHub\Enums\ChatbotRoles;
+use Droath\ChatbotHub\Messages\UserMessage;
 use OpenAI\Responses\Responses\CreateResponse;
-use OpenAI\Responses\Chat\CreateResponseChoice;
-use OpenAI\Responses\Chat\CreateResponseToolCall;
-use OpenAI\Responses\Chat\CreateStreamedResponse;
 use Droath\ChatbotHub\Resources\Concerns\WithTools;
 use Droath\ChatbotHub\Resources\Concerns\WithModel;
 use Droath\ChatbotHub\Resources\Concerns\WithInput;
 use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
+use OpenAI\Responses\Responses\Output\OutputMessage;
 use Droath\ChatbotHub\Resources\Concerns\WithMessages;
-use OpenAI\Responses\Chat\CreateStreamedResponseChoice;
 use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
-use OpenAI\Responses\Chat\CreateStreamedResponseToolCall;
+use OpenAI\Responses\Responses\Streaming\OutputTextDelta;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Resources\Concerns\WithResponseFormat;
 use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasDriverInterface;
+use OpenAI\Responses\Responses\Output\OutputFunctionToolCall;
 use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
@@ -79,7 +76,7 @@ class OpenaiResponsesResource implements ResponsesResourceInterface, HasResponse
     }
 
     /**
-     * Create the chat resource response.
+     * Create the resource response.
      */
     protected function createResourceResponse(
         array $parameters
@@ -91,14 +88,14 @@ class OpenaiResponsesResource implements ResponsesResourceInterface, HasResponse
     }
 
     /**
-     * Process the chat stream content.
+     * Process the stream output text delta.
      */
     protected function processStreamContent(
-        CreateStreamedResponse $response,
+        OutputTextDelta $textDelta,
         ?string $streamContent
     ): ?string
     {
-        if ($chunk = $response->choices[0]->delta->content) {
+        if ($chunk = $textDelta->delta) {
             $processorMethod = $this->useStreamBuffer
                 ? 'handleStreamBufferProcess'
                 : 'handleStreamProcess';
@@ -178,13 +175,13 @@ class OpenaiResponsesResource implements ResponsesResourceInterface, HasResponse
     }
 
     /**
-     * Define the openai response parameters.
+     * Define the resource parameters.
      */
     protected function resourceParameters(): array
     {
         $parameters = [
             'model' => $this->model,
-            'input' => $this->input ?: $this->resolveMessages(),
+            'input' => $this->resolveInput(),
             'tools' => $this->resolveTools(),
         ];
 
@@ -196,29 +193,30 @@ class OpenaiResponsesResource implements ResponsesResourceInterface, HasResponse
     }
 
     /**
-     * Determine if the response is a tool call.
+     * @return array
      */
-    protected function isToolCall($choice): bool
+    protected function resolveInput(): array
     {
-        return ($choice->finishReason === 'tool_calls')
-            && ! empty($choice->message?->toolCalls ?? []);
+        return $this->input
+            ? [UserMessage::make($this->input)->toArray()]
+            : $this->resolveMessages();
     }
 
     /**
-     * Invoke the chat tool from the response.
+     * Invoke the resource function tool.
      *
      * @throws \JsonException
      */
     protected function invokeTool(
-        CreateResponseToolCall|CreateStreamedResponseToolCall $toolCall
+        OutputFunctionToolCall $toolCall
     ): ?string
     {
-        $tool = $this->tools->firstWhere('name', $toolCall->function->name);
+        $tool = $this->tools->firstWhere('name', $toolCall->name);
 
         if ($tool instanceof Tool) {
-            $arguments = ! empty($toolCall->function->arguments)
+            $arguments = ! empty($toolCall->arguments)
                 ? json_decode(
-                    $toolCall->function->arguments,
+                    $toolCall->arguments,
                     true,
                     512,
                     JSON_THROW_ON_ERROR
@@ -231,51 +229,42 @@ class OpenaiResponsesResource implements ResponsesResourceInterface, HasResponse
     }
 
     /**
-     * Handle the chat tool calling.
+     * Handle the resource function tool calling.
      *
      * @throws \JsonException
      */
-    protected function handleToolCall(
-        CreateResponseChoice|CreateStreamedResponseChoice $choice
+    protected function handleFunctionToolCall(
+        OutputFunctionToolCall $output
     ): CreateResponse|StreamResponse
     {
         $parameters = $this->resourceParameters();
 
-        $choiceInstance = match (true) {
-            $choice instanceof CreateResponseChoice => $choice->message,
-            $choice instanceof CreateStreamedResponseChoice => $choice->delta
-        };
-        $parameters['messages'][] = $choiceInstance->toArray();
+        $parameters['input'][] = $output->toArray();
 
-        foreach ($choiceInstance->toolCalls as $toolCall) {
-            if ($toolCall->type !== 'function') {
-                continue;
-            }
-
-            $parameters['messages'][] = [
-                'role' => ChatbotRoles::TOOL->value,
-                'content' => $this->invokeTool($toolCall),
-                'tool_call_id' => $toolCall->id,
-            ];
-        }
+        $parameters['input'][] = [
+            'type' => 'function_call_output',
+            'call_id' => $output->callId,
+            'output' => $this->invokeTool($output),
+        ];
 
         return $this->createResourceResponse($parameters);
     }
 
     /**
-     * Handle all chat responses.
+     * Handle the resource response.
      */
-    protected function handleResponse(object $response): ?ChatbotHubResponseMessage
+    protected function handleResponse(
+        StreamResponse|CreateResponse $response
+    ): ?ChatbotHubResponseMessage
     {
         try {
             return match (true) {
                 $response instanceof StreamResponse => $this->handleStream($response),
                 $response instanceof CreateResponse => $this->handleSynchronous($response),
-                default => throw new \RuntimeException('Unexpected response type')
+                default => throw new \RuntimeException('Unexpected response instance')
             };
         } catch (\Exception $exception) {
             Log::error($exception->getMessage());
-
             return null;
         }
     }
@@ -287,49 +276,20 @@ class OpenaiResponsesResource implements ResponsesResourceInterface, HasResponse
         CreateResponse $response
     ): ?ChatbotHubResponseMessage
     {
-        return ChatbotHubResponseMessage::fromString(
-            $response->outputText
-        );
-    }
-
-    /**
-     * Process the stream tool calls.
-     */
-    protected function processStreamToolCalls(
-        CreateStreamedResponse $response,
-        array $streamToolCalls
-    ): array
-    {
-        if (empty($this->tools)) {
-            return $streamToolCalls;
-        }
-
-        foreach ($response->choices as $choice) {
-            if (empty($choice->delta->toolCalls)) {
-                continue;
-            }
-            foreach ($choice->toArray() as $parentKey => $value) {
-                if (is_array($value)) {
-                    foreach (Arr::dot($value) as $nestedKey => $nestedValue) {
-                        $prevValue = Arr::get($streamToolCalls, "$parentKey.$nestedKey", '');
-                        $prevValue .= $nestedValue;
-                        Arr::set(
-                            $streamToolCalls,
-                            "$parentKey.$nestedKey",
-                            $prevValue
-                        );
-                    }
-                } else {
-                    $streamToolCalls[$parentKey] = $value;
-                }
+        foreach ($response->output as $output) {
+            if (
+                $output instanceof OutputFunctionToolCall
+                && ($response = $this->handleFunctionToolCall($output))
+            ) {
+                $this->handleResponse($response);
             }
         }
 
-        return $streamToolCalls;
+        return ChatbotHubResponseMessage::fromString($response->outputText);
     }
 
     /**
-     * Handle the chat stream process.
+     * Handle the resource stream process.
      *
      * @throws \JsonException
      */
@@ -338,42 +298,41 @@ class OpenaiResponsesResource implements ResponsesResourceInterface, HasResponse
     ): ?ChatbotHubResponseMessage
     {
         $streamContent = null;
-        $streamToolCalls = [];
 
-        /** @var \OpenAI\Responses\Chat\CreateStreamedResponse $response */
+        /** @var \OpenAI\Responses\Responses\CreateStreamedResponse $response */
         foreach ($stream as $response) {
-            $finishReason = $response->choices[0]->finishReason;
+            $event = $response->event;
 
-            $streamContent = $this->processStreamContent(
-                $response,
-                $streamContent
-            );
-
-            $streamToolCalls = $this->processStreamToolCalls(
-                $response,
-                $streamToolCalls
-            );
-
-            if ($finishReason === 'tool_calls'
-                && ! empty($streamToolCalls)
-                && ($choice = CreateStreamedResponseChoice::from($streamToolCalls))
-            ) {
-                $toolCallResponse = $this->handleToolCall($choice);
-
-                return $this->handleResponse($toolCallResponse);
-            }
-
-            if ($finishReason === 'stop') {
-                $streamFinished = $this->streamFinished;
-                $streamResponse = ChatbotHubResponseMessage::fromString(
+            if ($event === 'response.output_text.delta') {
+                $streamContent = $this->processStreamContent(
+                    $response->response,
                     $streamContent
                 );
+            }
 
-                if (is_callable($streamFinished)) {
-                    $streamFinished($streamResponse);
+            if ($event === 'response.output_item.done') {
+                $item = $response->response->item;
+
+                if ($item instanceof OutputFunctionToolCall) {
+                    return $this->handleResponse(
+                        $this->handleFunctionToolCall($response->response->item)
+                    );
                 }
 
-                return $streamResponse;
+                if ($item instanceof OutputMessage) {
+                    $text = $item->content[0]->text;
+
+                    $streamResponse = ChatbotHubResponseMessage::fromString(
+                        $text
+                    );
+                    $streamFinished = $this->streamFinished;
+
+                    if (is_callable($streamFinished)) {
+                        $streamFinished($streamResponse);
+                    }
+
+                    return $streamResponse;
+                }
             }
         }
 

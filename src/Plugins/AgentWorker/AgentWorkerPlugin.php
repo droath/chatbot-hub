@@ -10,15 +10,16 @@ use Droath\ChatbotHub\Agents\ChatAgent;
 use Droath\ChatbotHub\Facades\ChatbotHub;
 use Droath\PluginManager\Plugin\PluginBase;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
+use Droath\ChatbotHub\Plugins\AgentToolPluginManager;
 use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
-use Droath\ChatbotHub\Plugins\Contracts\ChatAgentPluginWorkerInterface;
+use Droath\ChatbotHub\Plugins\Contracts\AgentWorkerPluginInterface;
 
 /**
  * Define the agent worker plugin base.
  */
-abstract class ChatAgentWorkerPlugin extends PluginBase implements ChatAgentPluginWorkerInterface
+abstract class AgentWorkerPlugin extends PluginBase implements AgentWorkerPluginInterface
 {
     /**
      * @var \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider
@@ -90,7 +91,18 @@ abstract class ChatAgentWorkerPlugin extends PluginBase implements ChatAgentPlug
      */
     protected function tools(): array
     {
-        return [];
+        $manager = app(AgentToolPluginManager::class);
+
+        return collect($this->pluginDefinition['tools'])
+            ->map(function ($name) use ($manager) {
+                /** @var \Droath\ChatbotHub\Plugins\Contracts\AgentToolPluginInterface $instance */
+                if ($instance = $manager->createInstance($name)) {
+                    return $instance->definition();
+                }
+                return null;
+            })
+            ->filter()
+            ->all();
     }
 
     /**

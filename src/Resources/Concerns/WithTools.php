@@ -6,6 +6,7 @@ namespace Droath\ChatbotHub\Resources\Concerns;
 
 use Droath\ChatbotHub\Tools\Tool;
 use Illuminate\Support\Collection;
+use Droath\ChatbotHub\Resources\Contracts\HasToolTransformerInterface;
 
 trait WithTools
 {
@@ -29,6 +30,9 @@ trait WithTools
         if ($this->tools instanceof Collection) {
             return $this->tools->map(function ($tool) {
                 if ($tool instanceof Tool) {
+                    if ($this instanceof HasToolTransformerInterface) {
+                        return self::transformTool($tool);
+                    }
                     return $this->driver::transformTool($tool);
                 }
                 return $tool;

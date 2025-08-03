@@ -7,7 +7,6 @@ namespace Droath\ChatbotHub\Drivers;
 use OpenAI\Client;
 use Illuminate\Support\Str;
 use Droath\ChatbotHub\Tools\Tool;
-use Illuminate\Support\Collection;
 use Droath\ChatbotHub\Tools\ToolProperty;
 use Droath\ChatbotHub\Resources\OpenaiChatResource;
 use Droath\ChatbotHub\Resources\OpenaiEmbeddingResource;
@@ -44,18 +43,35 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasResponsesI
     {
         $data = $tool->toArray();
 
-        return [
+        $definition = [
             'type' => 'function',
-            'function' => array_filter([
-                'name' => $data['name'],
-                'strict' => $data['strict'] ?? false,
-                'parameters' => $tool->hasProperties() ? [
-                    'type' => 'object',
-                    'properties' => static::transformToolProperties($data['properties']),
-                    'required' => $data['required'] ?? [],
-                ] : [],
-            ]),
+            'name' => $data['name'],
+            'strict' => $data['strict'] ?? false,
         ];
+
+        if ($tool->hasProperties()) {
+            $definition['parameters'] = [
+                'type' => 'object',
+                'properties' => $data['properties']
+                    ->flatMap(function (ToolProperty $property) {
+                        $data = $property->toArray();
+
+                        if ($name = $data['name']) {
+                            return [
+                                $name => array_filter([
+                                    'type' => $data['type'],
+                                    'enum' => $data['enum'],
+                                    'description' => $data['description'],
+                                ]),
+                            ];
+                        }
+                        return [];
+                    })->toArray(),
+                'required' => $data['required'] ?? [],
+            ];
+        }
+
+        return $definition;
     }
 
     /**
@@ -121,32 +137,6 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasResponsesI
         }
 
         return null;
-    }
-
-    /**
-     * @param \Illuminate\Support\Collection $properties
-     *
-     * @return array
-     */
-    protected static function transformToolProperties(
-        Collection $properties
-    ): array
-    {
-        return $properties->flatMap(function (ToolProperty $property) {
-            $data = $property->toArray();
-
-            if ($name = $data['name']) {
-                return [
-                    $name => array_filter([
-                        'type' => $data['type'],
-                        'enum' => $data['enum'],
-                        'description' => $data['description'],
-                    ]),
-                ];
-            }
-
-            return [];
-        })->toArray();
     }
 
     /**

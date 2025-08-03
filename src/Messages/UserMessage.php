@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub\Messages;
 
 use Droath\ChatbotHub\Enums\ChatbotRoles;
+use Droath\ChatbotHub\Messages\Concerns\ViewSupport;
 use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
 use Droath\ChatbotHub\Messages\Contracts\MessageDriverAwareInterface;
 
@@ -13,6 +14,8 @@ use Droath\ChatbotHub\Messages\Contracts\MessageDriverAwareInterface;
  */
 final class UserMessage extends MessageBase implements MessageDriverAwareInterface
 {
+    use ViewSupport;
+
     /**
      * @var \Droath\ChatbotHub\Drivers\Contracts\DriverInterface|null
      */

@@ -8,10 +8,15 @@ use Droath\ChatbotHub\Messages\SystemMessage;
 use Droath\PluginManager\Contracts\PluginInterface;
 
 /**
- * Define the agent plugin worker interface.
+ * Define the agent worker plugin interface.
  */
-interface ChatAgentPluginWorkerInterface extends PluginInterface
+interface AgentWorkerPluginInterface extends PluginInterface
 {
+    /**
+     * Define the agent system message.
+     */
+    public function systemInstruction(): SystemMessage;
+
     /**
      * Invoke the chat agent response.
      *
@@ -23,9 +28,4 @@ interface ChatAgentPluginWorkerInterface extends PluginInterface
      * @return mixed
      */
     public function response(array $messages = [], array $tools = []): mixed;
-
-    /**
-     * Define the chat agent system message.
-     */
-    public function systemInstruction(): SystemMessage;
 }

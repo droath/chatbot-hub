@@ -21,7 +21,8 @@ class AgentWorkerPluginMetadata extends PluginMetadata
     public function __construct(
         string $id,
         string $label,
-        protected ChatbotProvider $provider
+        protected ChatbotProvider $provider,
+        protected array $tools = []
     )
     {
         parent::__construct($id, $label);

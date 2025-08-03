@@ -13,7 +13,7 @@ class GetWeatherTool extends Tool
     {
         parent::__construct('get_weather');
         $this->describe('The current weather for a particular location.');
-        $this->using(function (string $location) {
+        $this->using(function (array $arguments) {
             return "It's 89 degrees";
         });
         $this->withProperties([
