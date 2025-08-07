@@ -101,7 +101,7 @@ class ChatAgent implements ChatAgentInterface
      */
     public function addMessages(array $messages): static
     {
-        foreach ($messages as $message) {
+        foreach (array_filter($messages) as $message) {
             if (! $message instanceof UserMessage) {
                 $message = UserMessage::make($message);
             }

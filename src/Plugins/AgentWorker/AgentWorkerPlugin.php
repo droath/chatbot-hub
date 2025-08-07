@@ -9,11 +9,15 @@ use Illuminate\Support\Facades\Log;
 use Droath\ChatbotHub\Agents\ChatAgent;
 use Droath\ChatbotHub\Facades\ChatbotHub;
 use Droath\PluginManager\Plugin\PluginBase;
+use Droath\ChatbotHub\Messages\UserMessage;
+use Droath\ChatbotHub\Messages\SystemMessage;
+use Droath\ChatbotHub\Agents\AgentProcessHandler;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Plugins\AgentToolPluginManager;
 use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
+use Droath\PluginManager\Exceptions\PluginNotFoundException;
 use Droath\ChatbotHub\Plugins\Contracts\AgentWorkerPluginInterface;
 
 /**
@@ -29,25 +33,121 @@ abstract class AgentWorkerPlugin extends PluginBase implements AgentWorkerPlugin
     /**
      * @inheritDoc
      */
-    public function response(
-        array $userMessages = [],
+    public function respond(
+        array $message = [],
         array $tools = []
-    ): mixed
+    ): array
     {
         try {
             if ($agent = $this->createAgent()) {
                 $response = $agent
                     ->addTools($tools)
-                    ->addMessages($userMessages)
+                    ->addMessages($message)
                     ->run();
 
-                return $this->handleResponse($response);
+                $agentResponse = $this->handleResponse($response);
+                $subAgentResponses = $this->invokeSubAgentResponses($message);
+
+                return [
+                    $agentResponse,
+                    ...$subAgentResponses
+                ];
             }
         } catch (\Exception $exception) {
             Log::error($exception->getMessage());
         }
 
+        return [];
+    }
+
+    /**
+     * Define the agent provider model.
+     *
+     * @return string|null
+     */
+    protected function model(): ?string
+    {
         return null;
+    }
+
+    /**
+     * Define the agent response format.
+     *
+     * @return array
+     */
+    protected function responseFormat(): array
+    {
+        return [];
+    }
+
+    /**
+     * Define the agent worker messages.
+     */
+    protected function messages(): array
+    {
+        return array_filter([
+            $this->systemInstruction(),
+            $this->userInstruction(),
+        ]);
+    }
+
+    /**
+     * Define the agent default tools.
+     */
+    protected function tools(): array
+    {
+        $manager = app(AgentToolPluginManager::class);
+
+        return collect($this->pluginDefinition['tools'] ?? [])
+            ->map(function ($name) use ($manager) {
+                if (is_string($name)) {
+                    try {
+                        /** @var \Droath\ChatbotHub\Plugins\Contracts\AgentToolPluginInterface $instance */
+                        if ($instance = $manager->createInstance($name)) {
+                            return $instance->definition();
+                        }
+                    } catch (PluginNotFoundException) {
+                        return $name;
+                    }
+                }
+                return $name;
+            })
+            ->filter()
+            ->all();
+    }
+
+    /**
+     * @return array
+     */
+    protected function registerSubAgents(): array
+    {
+        return [];
+    }
+
+    /**
+     * Invoke the subagent responses.
+     *
+     * @param array|string $message
+     *
+     * @return array
+     */
+    protected function invokeSubAgentResponses(
+        array|string $message
+    ): array
+    {
+        $responses = [];
+
+        /** @var \Droath\ChatbotHub\Agents\AgentProcessHandler $handler */
+        foreach ($this->registerSubAgents() as $handler) {
+            if (! $handler instanceof AgentProcessHandler) {
+                continue;
+            }
+            $responses[] = $handler
+                ->message($message)
+                ->__invoke();
+        }
+
+        return $responses;
     }
 
     /**
@@ -64,69 +164,20 @@ abstract class AgentWorkerPlugin extends PluginBase implements AgentWorkerPlugin
             $this->model(),
             $this->responseFormat()
         )->setResourceInstance(
-            $this->agentResourceInstance()
+            $this->resourceInstance()
         );
     }
 
     /**
      * @return \Droath\ChatbotHub\Resources\Contracts\ResourceInterface
      */
-    protected function agentResourceInstance(): ResourceInterface
+    protected function resourceInstance(): ResourceInterface
     {
         return ChatbotHub::chat($this->provider());
     }
 
     /**
-     * Define the agent provider model.
-     *
-     * @return string|null
-     */
-    protected function model(): ?string
-    {
-        return null;
-    }
-
-    /**
-     * Define the agent default tools.
-     */
-    protected function tools(): array
-    {
-        $manager = app(AgentToolPluginManager::class);
-
-        return collect($this->pluginDefinition['tools'])
-            ->map(function ($name) use ($manager) {
-                /** @var \Droath\ChatbotHub\Plugins\Contracts\AgentToolPluginInterface $instance */
-                if ($instance = $manager->createInstance($name)) {
-                    return $instance->definition();
-                }
-                return null;
-            })
-            ->filter()
-            ->all();
-    }
-
-    /**
-     * Define the agent worker messages.
-     */
-    protected function messages(): array
-    {
-        return [
-            $this->systemInstruction(),
-        ];
-    }
-
-    /**
-     * Define the agent worker response format.
-     *
-     * @return array
-     */
-    protected function responseFormat(): array
-    {
-        return [];
-    }
-
-    /**
-     * Resolve the chat agent chatbot provider.
+     * Resolve the agent plugin chatbot provider.
      */
     protected function provider(): ?ChatbotProvider
     {
@@ -199,6 +250,19 @@ abstract class AgentWorkerPlugin extends PluginBase implements AgentWorkerPlugin
     {
         return $message;
     }
+
+    /**
+     * Define the agent user message
+     */
+    protected function userInstruction(): ?UserMessage
+    {
+        return null;
+    }
+
+    /**
+     * Define the agent system message.
+     */
+    abstract protected function systemInstruction(): ?SystemMessage;
 
     /**
      * Handler for the chat agent response message.
