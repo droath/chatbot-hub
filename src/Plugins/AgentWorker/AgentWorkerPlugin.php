@@ -39,7 +39,7 @@ abstract class AgentWorkerPlugin extends PluginBase implements AgentWorkerPlugin
                 $response = $agent
                     ->addTools($tools)
                     ->addInputs($message)
-                    ->run();
+                    ->run($this->resourceInstance());
 
                 return [
                     $this->handleResponse($response),

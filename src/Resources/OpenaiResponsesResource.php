@@ -165,7 +165,7 @@ class OpenaiResponsesResource implements HasDriverInterface, HasMessagesInterfac
         ];
 
         if ($format = $this->responseFormat) {
-            $parameters['text']['format'] = $format;
+            $parameters['text']['format'] = reset($format);
         }
 
         return array_filter($parameters);

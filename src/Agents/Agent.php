@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Agents;
 
-use Droath\ChatbotHub\Agents\Contracts\AgentInterface;
-use Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface;
+use Illuminate\Support\Arr;
+use Droath\ChatbotHub\Tools\Tool;
 use Droath\ChatbotHub\Messages\MessageBase;
-use Droath\ChatbotHub\Messages\SystemMessage;
 use Droath\ChatbotHub\Messages\UserMessage;
-use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
-use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
+use Droath\ChatbotHub\Messages\SystemMessage;
+use Droath\ChatbotHub\Agents\Contracts\AgentInterface;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
 use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
-use Droath\ChatbotHub\Tools\Tool;
-use Illuminate\Support\Arr;
+use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 
 class Agent implements AgentInterface
 {
@@ -80,7 +80,9 @@ class Agent implements AgentInterface
      */
     public function addInputs(array $input): static
     {
-        $this->input = [...$this->input, ...$input];
+        foreach ($input as $message) {
+            $this->addInput($message);
+        }
 
         return $this;
     }
