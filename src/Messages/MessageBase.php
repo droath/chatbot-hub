@@ -4,23 +4,15 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Messages;
 
-use Livewire\Wireable;
 use Illuminate\Contracts\Support\Arrayable;
+use Livewire\Wireable;
 
-abstract class MessageBase implements Wireable, Arrayable
+abstract class MessageBase implements Arrayable, Wireable
 {
-    /**
-     * @param string $content
-     */
     private function __construct(
         public readonly string $content,
     ) {}
 
-    /**
-     * @param $value
-     *
-     * @return self
-     */
     public static function fromLivewire($value): self
     {
         return self::make(
@@ -29,8 +21,6 @@ abstract class MessageBase implements Wireable, Arrayable
     }
 
     /**
-     * @param array $value
-     *
      * @return self
      */
     public static function fromValue(array $value): mixed
@@ -41,20 +31,14 @@ abstract class MessageBase implements Wireable, Arrayable
     }
 
     /**
-     * @param string $content
-     *
      * @return static
      */
     public static function make(
         string $content,
-    ): mixed
-    {
+    ): mixed {
         return new static($content);
     }
 
-    /**
-     * @return array
-     */
     public function toValue(): array
     {
         return $this->toArray();

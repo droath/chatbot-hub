@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Resources;
 
-use Psr\Http\Message\ResponseInterface;
-use Droath\ChatbotHub\Drivers\Perplexity;
-use SoftCreatR\PerplexityAI\PerplexityAI;
-use Droath\ChatbotHub\Resources\Concerns\WithMessages;
 use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Drivers\Perplexity;
+use Droath\ChatbotHub\Resources\Concerns\WithMessages;
 use Droath\ChatbotHub\Resources\Concerns\WithResponseFormat;
-use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Psr\Http\Message\ResponseInterface;
+use SoftCreatR\PerplexityAI\PerplexityAI;
 
 /**
  * Define the Perplexity chat resource.
@@ -79,8 +79,6 @@ class PerplexityChatResource implements ChatResourceInterface, HasMessagesInterf
      *
      * This is a workaround for Perplexity API, which doesn't allow consecutive
      * messages with the same role.
-     *
-     * @return array
      */
     protected function mergeConsecutiveMessages(): array
     {
@@ -97,11 +95,6 @@ class PerplexityChatResource implements ChatResourceInterface, HasMessagesInterf
             }, []);
     }
 
-    /**
-     * @param \Psr\Http\Message\ResponseInterface $response
-     *
-     * @return array
-     */
     protected function formatJsonFromResponse(ResponseInterface $response): array
     {
         $content = $response->getBody()->getContents();

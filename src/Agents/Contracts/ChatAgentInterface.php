@@ -4,19 +4,15 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Agents\Contracts;
 
-use Droath\ChatbotHub\Messages\UserMessage;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
+use Droath\ChatbotHub\Messages\UserMessage;
+use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 
-interface ChatAgentInterface extends AgentInterface
+interface ChatAgentInterface
 {
     /**
      * Create the chat agent instance.
-     *
-     * @param \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider $provider
-     * @param array $messages
-     * @param array $tools
-     *
-     * @return self
      */
     public static function make(
         ChatbotProvider $provider,
@@ -57,9 +53,20 @@ interface ChatAgentInterface extends AgentInterface
     /**
      * Add the response format to the chat agent instance.
      *
-     * @param array $responseFormat
      *
      * @return $this
      */
     public function addResponseFormat(array $responseFormat): static;
+
+    /**
+     * Run the agent implementation.
+     */
+    public function run(): ChatbotHubResponseMessage|array;
+
+    /**
+     * Set the agent resource instance.
+     *
+     * @return \Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface
+     */
+    public function setResourceInstance(ResourceInterface $resource): static;
 }

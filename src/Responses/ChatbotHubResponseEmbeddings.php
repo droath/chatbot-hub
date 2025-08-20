@@ -13,11 +13,6 @@ final readonly class ChatbotHubResponseEmbeddings
         public array $embeddings,
     ) {}
 
-    /**
-     * @param array $embeddings
-     *
-     * @return self
-     */
     public static function fromArray(array $embeddings): self
     {
         return new self($embeddings);

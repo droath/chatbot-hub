@@ -12,7 +12,7 @@ use Droath\ChatbotHub\Enums\ChatbotRoles;
 final class AssistantMessage extends MessageBase
 {
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function toArray(): array
     {

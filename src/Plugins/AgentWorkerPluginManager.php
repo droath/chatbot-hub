@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub\Plugins;
 
 use Droath\ChatbotHub\Attributes\AgentWorkerPluginMetadata;
-use Droath\ChatbotHub\Plugins\Contracts\ChatAgentPluginWorkerInterface;
+use Droath\ChatbotHub\Plugins\Contracts\AgentWorkerPluginInterface;
 use Droath\PluginManager\DefaultPluginManager;
 use Droath\PluginManager\Discovery\NamespacePluginDiscovery;
 
@@ -18,7 +18,7 @@ class AgentWorkerPluginManager extends DefaultPluginManager
     {
         parent::__construct(new NamespacePluginDiscovery(
             namespaces: ['App\Plugins'],
-            pluginInterface: ChatAgentPluginWorkerInterface::class,
+            pluginInterface: AgentWorkerPluginInterface::class,
             pluginMetadataAttribute: AgentWorkerPluginMetadata::class
         ));
     }

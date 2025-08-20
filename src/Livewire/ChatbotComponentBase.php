@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Livewire;
 
-use Livewire\Component;
-use Livewire\Attributes\Validate;
-use Droath\ChatbotHub\Drivers\Openai;
-use Illuminate\Database\Eloquent\Model;
-use Droath\ChatbotHub\Facades\ChatbotHub;
-use Illuminate\Database\Eloquent\Builder;
-use Droath\ChatbotHub\Messages\UserMessage;
-use Droath\ChatbotHub\Messages\SystemMessage;
-use Droath\ChatbotHub\Models\ChatbotMessages;
-use Droath\ChatbotHub\Messages\MessageContext;
-use Droath\ChatbotHub\Messages\AssistantMessage;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
-use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
+use Droath\ChatbotHub\Drivers\Openai;
+use Droath\ChatbotHub\Facades\ChatbotHub;
 use Droath\ChatbotHub\Livewire\Contracts\ChatbotComponentInterface;
+use Droath\ChatbotHub\Messages\AssistantMessage;
+use Droath\ChatbotHub\Messages\MessageContext;
+use Droath\ChatbotHub\Messages\SystemMessage;
+use Droath\ChatbotHub\Messages\UserMessage;
+use Droath\ChatbotHub\Models\ChatbotMessages;
+use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Livewire\Attributes\Validate;
+use Livewire\Component;
 
 abstract class ChatbotComponentBase extends Component implements ChatbotComponentInterface
 {
@@ -28,21 +28,17 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
     /** @var \Droath\ChatbotHub\Drivers\Enums\ChatbotProvider */
     protected const ChatbotProvider CHATBOT_PROVIDER = ChatbotProvider::OPENAI;
 
-    /** @var array */
     public array $messages = [];
-    /** @var \Illuminate\Database\Eloquent\Model|null */
+
     public ?Model $parent = null;
-    /** @var string|null */
+
     #[Validate('required|max:10000')]
     public ?string $message = null;
-    /** @var bool */
+
     public bool $isStreaming = false;
-    /** @var string|null */
+
     public ?string $streamMessage = null;
 
-    /**
-     * @return void
-     */
     public function mount(): void
     {
         if ($this->parent instanceof Model) {
@@ -51,7 +47,7 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function sendMessage(): bool
     {
@@ -72,9 +68,6 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
         return false;
     }
 
-    /**
-     * @return void
-     */
     public function clearMessages(): void
     {
         $this->messages = [];
@@ -85,7 +78,7 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function respondToMessage(): void
     {
@@ -111,9 +104,6 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
         $resource();
     }
 
-    /**
-     * @return array
-     */
     protected function tools(): array
     {
         return [];
@@ -126,14 +116,11 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
      *   The partial stream data.
      * @param bool $initialized
      *   A flag denoting if the stream is initialized.
-     *
-     * @return void
      */
     protected function streamProcessing(
         string $partial,
         bool $initialized
-    ): void
-    {
+    ): void {
         $this->stream(
             'streamMessage',
             $this->formatStreamData($partial),
@@ -155,8 +142,7 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
      */
     protected function streamBufferProcessing(
         string $partial
-    ): bool
-    {
+    ): bool {
         return true;
     }
 
@@ -165,13 +151,10 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
      *
      * @param \Droath\ChatbotHub\Responses\ChatbotHubResponseMessage $response
      *   The chatbot hub response message.
-     *
-     * @return void
      */
     protected function streamFinishedProcessing(
         ChatbotHubResponseMessage $response
-    ): void
-    {
+    ): void {
         $this->messages[] = AssistantMessage::make($response->message);
 
         if ($this->parent instanceof Model) {
@@ -182,7 +165,7 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
                     'parent_type' => $this->parent->getMorphClass(),
                 ],
                 [
-                    'message' => $this->messages
+                    'message' => $this->messages,
                 ]
             );
         }
@@ -193,8 +176,6 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
      *
      * @param string $partial
      *   The partial stream data.
-     *
-     * @return string
      */
     protected function formatStreamData(string $partial): string
     {
@@ -215,8 +196,6 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
 
     /**
      * Define the chat message builder query.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder|null
      */
     protected function chatMessagesBuilder(): ?Builder
     {
@@ -229,17 +208,10 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
             ->where('parent_type', $this->parent->getMorphClass());
     }
 
-    /**
-     * @return \Droath\ChatbotHub\Messages\SystemMessage
-     */
     abstract protected function systemMessage(): SystemMessage;
 
     /**
      * Define user message context based on the current chatbot message.
-     *
-     * @param string $message
-     *
-     * @return \Droath\ChatbotHub\Messages\MessageContext|null
      */
     protected function userMessageContext(string $message): ?MessageContext
     {

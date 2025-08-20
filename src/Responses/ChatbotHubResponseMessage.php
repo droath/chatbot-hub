@@ -24,4 +24,10 @@ final readonly class ChatbotHubResponseMessage
     {
         return new self(Arr::get($message, $key));
     }
+
+    public function __toString(): string
+    {
+        return $this->message ?? '';
+
+    }
 }

@@ -4,28 +4,32 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Agents;
 
+use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
+use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Facades\ChatbotHub;
 use Droath\ChatbotHub\Messages\UserMessage;
-use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
-use Droath\ChatbotHub\Agents\Contracts\ChatAgentInterface;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
-use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
-use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
+use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 
 /**
  * Define a chat agent class implementation.
  */
 class ChatAgent implements ChatAgentInterface
 {
+    protected ResourceInterface $resource;
+
     protected function __construct(
         protected ChatbotProvider $provider,
         protected array $messages,
         protected array $tools,
         protected ?string $model,
         protected array $responseFormat
-    ) {}
+    ) {
+        $this->resource = ChatbotHub::chat($this->provider);
+    }
 
     /**
      * {@inheritDoc}
@@ -34,11 +38,20 @@ class ChatAgent implements ChatAgentInterface
         ChatbotProvider $provider,
         array $messages,
         array $tools = [],
-        string $model = null,
+        ?string $model = null,
         array $responseFormat = []
-    ): self
-    {
+    ): self {
         return new self($provider, $messages, $tools, $model, $responseFormat);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setResourceInstance(ResourceInterface $resource): static
+    {
+        $this->resource = $resource;
+
+        return $this;
     }
 
     /**
@@ -78,7 +91,7 @@ class ChatAgent implements ChatAgentInterface
      */
     public function addMessages(array $messages): static
     {
-        foreach ($messages as $message) {
+        foreach (array_filter($messages) as $message) {
             if (! $message instanceof UserMessage) {
                 $message = UserMessage::make($message);
             }
@@ -106,29 +119,24 @@ class ChatAgent implements ChatAgentInterface
         return $this->createResource()->__invoke();
     }
 
-    /**
-     * @return \Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface
-     */
-    protected function createResource(): ChatResourceInterface
+    protected function createResource(): ResourceInterface
     {
-        $resource = ChatbotHub::chat($this->provider);
-
         if (! empty($this->model)) {
-            $resource->withModel($this->model);
+            $this->resource->withModel($this->model);
         }
 
-        if ($resource instanceof HasToolsInterface) {
-            $resource->withTools($this->tools);
+        if ($this->resource instanceof HasToolsInterface) {
+            $this->resource->withTools($this->tools);
         }
 
-        if ($resource instanceof HasMessagesInterface) {
-            $resource->withMessages($this->messages);
+        if ($this->resource instanceof HasMessagesInterface) {
+            $this->resource->withMessages($this->messages);
         }
 
-        if ($resource instanceof HasResponseFormatInterface) {
-            $resource->withResponseFormat($this->responseFormat);
+        if ($this->resource instanceof HasResponseFormatInterface) {
+            $this->resource->withResponseFormat($this->responseFormat);
         }
 
-        return $resource;
+        return $this->resource;
     }
 }

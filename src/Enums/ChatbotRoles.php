@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Enums;
 
-use Droath\ChatbotHub\Messages\MessageBase;
-use Droath\ChatbotHub\Messages\UserMessage;
-use Droath\ChatbotHub\Messages\SystemMessage;
 use Droath\ChatbotHub\Messages\AssistantMessage;
+use Droath\ChatbotHub\Messages\MessageBase;
+use Droath\ChatbotHub\Messages\SystemMessage;
+use Droath\ChatbotHub\Messages\UserMessage;
 
 /**
  * Define the standard chatbot roles.
@@ -21,16 +21,13 @@ enum ChatbotRoles: string
 
     /**
      * @param \Droath\ChatbotHub\Enums\ChatbotRoles $role
-     * @param array $values
      *
-     * @return \Droath\ChatbotHub\Messages\MessageBase
      * @throws \Exception
      */
     public static function createMessageFrom(
         string $role,
         array $values = []
-    ): MessageBase
-    {
+    ): MessageBase {
         $role = self::tryFrom($role);
 
         return match ($role) {
@@ -40,5 +37,4 @@ enum ChatbotRoles: string
             default => throw new \Exception('Unexpected match value'),
         };
     }
-
 }

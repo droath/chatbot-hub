@@ -4,32 +4,31 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Casts;
 
-use Illuminate\Database\Eloquent\Model;
 use Droath\ChatbotHub\Enums\ChatbotRoles;
 use Droath\ChatbotHub\Messages\MessageBase;
-use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Contracts\Database\Eloquent\Castable;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
+use Illuminate\Database\Eloquent\Casts\Json;
+use Illuminate\Database\Eloquent\Model;
 
 class AsChatbotMessage implements Castable
 {
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public static function castUsing(array $arguments): CastsAttributes
     {
-        return new class implements CastsAttributes {
-
+        return new class implements CastsAttributes
+        {
             /**
-             * @inheritDoc
+             * {@inheritDoc}
              */
             public function get(
                 Model $model,
                 string $key,
                 mixed $value,
                 array $attributes
-            ): array
-            {
+            ): array {
                 $storedValue = Json::decode($value);
 
                 return collect($storedValue)
@@ -37,6 +36,7 @@ class AsChatbotMessage implements Castable
                     ->map(function (array $message): MessageBase {
                         $role = $message['role'] ?? null;
                         unset($message['role']);
+
                         return ChatbotRoles::createMessageFrom(
                             $role,
                             $message
@@ -46,15 +46,14 @@ class AsChatbotMessage implements Castable
             }
 
             /**
-             * @inheritDoc
+             * {@inheritDoc}
              */
             public function set(
                 Model $model,
                 string $key,
                 mixed $value,
                 array $attributes
-            ): array
-            {
+            ): array {
                 $storedValue = collect($value)
                     ->map(function (MessageBase $message) {
                         return $message->toValue();
@@ -65,4 +64,3 @@ class AsChatbotMessage implements Castable
         };
     }
 }
-

@@ -10,8 +10,6 @@ interface HasDriverInterface
 {
     /**
      * Get the driver instance.
-     *
-     * @return \Droath\ChatbotHub\Drivers\Contracts\DriverInterface
      */
     public function driver(): DriverInterface;
 }

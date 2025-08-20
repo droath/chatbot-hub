@@ -4,22 +4,25 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Drivers;
 
-use OpenAI\Client;
 use Illuminate\Support\Str;
+use OpenAI\Testing\ClientFake;
 use Droath\ChatbotHub\Tools\Tool;
-use Illuminate\Support\Collection;
+use OpenAI\Contracts\ClientContract;
 use Droath\ChatbotHub\Tools\ToolProperty;
 use Droath\ChatbotHub\Resources\OpenaiChatResource;
 use Droath\ChatbotHub\Resources\OpenaiEmbeddingResource;
+use Droath\ChatbotHub\Resources\OpenaiResponsesResource;
 use Droath\ChatbotHub\Drivers\Contracts\HasChatInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasEmbeddingInterface;
+use Droath\ChatbotHub\Drivers\Contracts\HasResponsesInterface;
 use Droath\ChatbotHub\Resources\Contracts\ChatResourceInterface;
+use Droath\ChatbotHub\Resources\Contracts\ResponsesResourceInterface;
 use Droath\ChatbotHub\Resources\Contracts\EmbeddingsResourceInterface;
 
 /**
  * Define the OpenAI driver for chatbot hub.
  */
-class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingInterface
+class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingInterface, HasResponsesInterface
 {
     /** @var string */
     public const string DEFAULT_MODEL = 'gpt-4o-mini';
@@ -27,36 +30,51 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingI
     /** @var string */
     public const string DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small';
 
-    /**
-     * @param \OpenAI\Client $client
-     */
     public function __construct(
-        protected Client $client
+        protected ClientContract $client
     ) {}
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public static function transformTool(Tool $tool): array
     {
         $data = $tool->toArray();
 
-        return [
+        $definition = [
             'type' => 'function',
-            'function' => array_filter([
-                'name' => $data['name'],
-                'strict' => $data['strict'] ?? false,
-                'parameters' => $tool->hasProperties() ? [
-                    'type' => 'object',
-                    'properties' => static::transformToolProperties($data['properties']),
-                    'required' => $data['required'] ?? [],
-                ] : [],
-            ]),
+            'name' => $data['name'],
+            'strict' => $data['strict'] ?? false,
         ];
+
+        if ($tool->hasProperties()) {
+            $definition['parameters'] = [
+                'type' => 'object',
+                'properties' => $data['properties']
+                    ->flatMap(function (ToolProperty $property) {
+                        $data = $property->toArray();
+
+                        if ($name = $data['name']) {
+                            return [
+                                $name => array_filter([
+                                    'type' => $data['type'],
+                                    'enum' => $data['enum'],
+                                    'description' => $data['description'],
+                                ]),
+                            ];
+                        }
+
+                        return [];
+                    })->toArray(),
+                'required' => $data['required'] ?? [],
+            ];
+        }
+
+        return $definition;
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public static function transformUserMessage(string $content): string|array
     {
@@ -87,7 +105,7 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingI
                             'type' => 'file',
                             'file' => [
                                 'file_data' => $value,
-                            ]
+                            ],
                         ];
                     }
                 }
@@ -101,11 +119,6 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingI
         return $content;
     }
 
-    /**
-     * @param string $uri
-     *
-     * @return string|null
-     */
     protected static function decodeBase64DataUri(string $uri): ?string
     {
         preg_match('/^data:([^;]+);base64,(.+)$/i', $uri, $matches);
@@ -114,36 +127,18 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingI
 
         if (! empty($matches)) {
             [$mimeType, $data] = $matches;
+
             return base64_decode($data);
         }
 
         return null;
     }
 
-    /**
-     * @param \Illuminate\Support\Collection $properties
-     *
-     * @return array
-     */
-    protected static function transformToolProperties(
-        Collection $properties
-    ): array
+    public function client(): ?ClientContract
     {
-        return $properties->flatMap(function (ToolProperty $property) {
-            $data = $property->toArray();
-
-            if ($name = $data['name']) {
-                return [
-                    $name => array_filter([
-                        'type' => $data['type'],
-                        'enum' => $data['enum'],
-                        'description' => $data['description'],
-                    ]),
-                ];
-            }
-
-            return [];
-        })->toArray();
+        return $this->client instanceof ClientFake
+            ? $this->client
+            : null;
     }
 
     /**
@@ -153,6 +148,17 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingI
     {
         return new OpenaiChatResource(
             $this->client->chat(),
+            $this
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function responses(): ResponsesResourceInterface
+    {
+        return new OpenaiResponsesResource(
+            $this->client->responses(),
             $this
         );
     }

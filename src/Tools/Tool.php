@@ -23,7 +23,7 @@ class Tool implements Arrayable
      */
     protected array $properties = [];
 
-    public function __construct(
+    protected function __construct(
         public readonly string $name,
     ) {}
 
@@ -33,7 +33,7 @@ class Tool implements Arrayable
     }
 
     /**
-     * @param  mixed  ...$args
+     * @param mixed ...$args
      */
     public function __invoke(...$args): string
     {
@@ -81,7 +81,8 @@ class Tool implements Arrayable
     }
 
     /**
-     * @param  \Droath\ChatbotHub\Tools\ToolProperty[]  $properties
+     * @param \Droath\ChatbotHub\Tools\ToolProperty[] $properties
+     *
      * @return $this
      */
     public function withProperties(array $properties): self

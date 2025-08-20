@@ -10,7 +10,7 @@ use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
 abstract class ChatbotHubDriver implements DriverInterface
 {
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public static function transformTool(Tool $tool): array
     {
@@ -18,7 +18,7 @@ abstract class ChatbotHubDriver implements DriverInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public static function transformUserMessage(string $content): string|array
     {

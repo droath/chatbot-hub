@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Messages;
 
-use Droath\ChatbotHub\Enums\ChatbotRoles;
 use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
+use Droath\ChatbotHub\Enums\ChatbotRoles;
+use Droath\ChatbotHub\Messages\Concerns\ViewSupport;
 use Droath\ChatbotHub\Messages\Contracts\MessageDriverAwareInterface;
 
 /**
@@ -13,31 +14,22 @@ use Droath\ChatbotHub\Messages\Contracts\MessageDriverAwareInterface;
  */
 final class UserMessage extends MessageBase implements MessageDriverAwareInterface
 {
-    /**
-     * @var \Droath\ChatbotHub\Drivers\Contracts\DriverInterface|null
-     */
+    use ViewSupport;
+
     protected ?DriverInterface $driver = null;
 
-    /**
-     * @param string $content
-     * @param \Droath\ChatbotHub\Messages\MessageContext|null $context
-     */
     private function __construct(
         public readonly string $content,
         public readonly ?MessageContext $context,
     ) {}
 
     /**
-     * @param string $content
-     * @param \Droath\ChatbotHub\Messages\MessageContext|string|null $context
-     *
      * @return mixed
      */
     public static function make(
         string $content,
         null|string|MessageContext $context = null,
-    ): UserMessage
-    {
+    ): UserMessage {
         return new self(
             $content,
             is_string($context)
@@ -47,7 +39,7 @@ final class UserMessage extends MessageBase implements MessageDriverAwareInterfa
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public static function fromLivewire($value): self
     {
@@ -55,7 +47,7 @@ final class UserMessage extends MessageBase implements MessageDriverAwareInterfa
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public static function fromValue(array $value): self
     {
@@ -69,7 +61,7 @@ final class UserMessage extends MessageBase implements MessageDriverAwareInterfa
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function toValue(): array
     {
@@ -80,16 +72,13 @@ final class UserMessage extends MessageBase implements MessageDriverAwareInterfa
         ];
     }
 
-    /**
-     * @return bool
-     */
     public function hasContext(): bool
     {
         return ! empty($this->context);
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function toLivewire(): array
     {
@@ -100,7 +89,7 @@ final class UserMessage extends MessageBase implements MessageDriverAwareInterfa
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function toArray(): array
     {
@@ -111,16 +100,13 @@ final class UserMessage extends MessageBase implements MessageDriverAwareInterfa
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function setDriver(DriverInterface $driver): void
     {
         $this->driver = $driver;
     }
 
-    /**
-     * @return string|array
-     */
     protected function structureContent(): string|array
     {
         $content = $this->content;
