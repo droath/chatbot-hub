@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Plugins\AgentWorker;
 
-use Droath\ChatbotHub\Agents\Agent;
-use Droath\ChatbotHub\Agents\Contracts\AgentInterface;
-use Droath\ChatbotHub\Agents\ValueObject\AgentCoordinatorResponse;
-use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
-use Droath\ChatbotHub\Facades\ChatbotHub;
-use Droath\ChatbotHub\Messages\SystemMessage;
-use Droath\ChatbotHub\Messages\UserMessage;
-use Droath\ChatbotHub\Plugins\AgentToolPluginManager;
-use Droath\ChatbotHub\Plugins\Contracts\AgentWorkerPluginInterface;
-use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
-use Droath\PluginManager\Exceptions\PluginNotFoundException;
-use Droath\PluginManager\Plugin\PluginBase;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Droath\ChatbotHub\Agents\Agent;
+use Illuminate\Support\Facades\Log;
+use Droath\ChatbotHub\Facades\ChatbotHub;
+use Droath\ChatbotHub\Messages\UserMessage;
+use Droath\PluginManager\Plugin\PluginBase;
+use Droath\ChatbotHub\Messages\SystemMessage;
+use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
+use Droath\ChatbotHub\Plugins\AgentToolPluginManager;
+use Droath\ChatbotHub\Agents\Contracts\AgentInterface;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
+use Droath\PluginManager\Exceptions\PluginNotFoundException;
+use Droath\ChatbotHub\Agents\ValueObject\AgentCoordinatorResponse;
+use Droath\ChatbotHub\Plugins\Contracts\AgentWorkerPluginInterface;
 
 /**
  * Define the agent worker plugin base.
@@ -38,7 +38,7 @@ abstract class AgentWorkerPlugin extends PluginBase implements AgentWorkerPlugin
             if ($agent = $this->createAgent()) {
                 $response = $agent
                     ->addTools($tools)
-                    ->addInputs($message)
+                    ->addInputs((array) $message)
                     ->run($this->resourceInstance());
 
                 return [
