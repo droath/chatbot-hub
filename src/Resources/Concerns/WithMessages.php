@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Resources\Concerns;
 
-use Droath\ChatbotHub\Messages\Contracts\MessageDriverAwareInterface;
-use Droath\ChatbotHub\Resources\Contracts\HasDriverInterface;
+use Illuminate\Support\Arr;
 use Illuminate\Contracts\Support\Arrayable;
+use Droath\ChatbotHub\Messages\SystemMessage;
+use Droath\ChatbotHub\Resources\Contracts\HasDriverInterface;
+use Droath\ChatbotHub\Messages\Contracts\MessageDriverAwareInterface;
 
 trait WithMessages
 {
@@ -18,6 +20,19 @@ trait WithMessages
     public function withMessages(array $messages): static
     {
         $this->messages = $messages;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function pushSystemMessage(SystemMessage|string $message): static
+    {
+        $this->messages = Arr::prepend(
+            $this->messages,
+            is_string($message) ? SystemMessage::make($message) : $message,
+        );
 
         return $this;
     }

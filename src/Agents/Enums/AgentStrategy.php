@@ -6,7 +6,7 @@ namespace Droath\ChatbotHub\Agents\Enums;
 
 enum AgentStrategy: string
 {
-    case HANDOFF = 'handoff';
+    case ROUTER = 'router';
     case PARALLEL = 'parallel';
     case SEQUENTIAL = 'sequential';
 }

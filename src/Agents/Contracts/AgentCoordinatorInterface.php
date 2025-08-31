@@ -39,6 +39,20 @@ interface AgentCoordinatorInterface
     public function addAgent(AgentInterface $agent): static;
 
     /**
+     * Set the system prompt for the agent coordinator.
+     *
+     * @return $this
+     */
+    public function setSystemPrompt(string $prompt): static;
+
+    /**
+     * Set the response format for the agent coordinator.
+     *
+     * @return $this
+     */
+    public function setResponseFormat(array $format): static;
+
+    /**
      * Set the agent coordinator memory.
      *
      * @return $this

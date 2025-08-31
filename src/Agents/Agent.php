@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub\Agents;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Droath\ChatbotHub\Tools\Tool;
+use Droath\ChatbotHub\Tools\ToolProperty;
 use Droath\ChatbotHub\Messages\MessageBase;
 use Droath\ChatbotHub\Messages\UserMessage;
 use Droath\ChatbotHub\Messages\SystemMessage;
@@ -29,12 +31,18 @@ class Agent implements AgentInterface
 
     protected ?ResourceInterface $resource = null;
 
+    protected bool $skipTransformResponse = false;
+
+    protected ?\Closure $transformResponseHandler = null;
+
     /**
      * Define the agent constructor.
      */
     protected function __construct(
         string|array $input,
-        protected array $tools
+        protected array $tools,
+        public ?string $name,
+        public ?string $description,
     ) {
         $this->input = ! is_array($input)
             ? [UserMessage::make($input)]
@@ -46,19 +54,63 @@ class Agent implements AgentInterface
      */
     public static function make(
         string|array $input = [],
-        array $tools = []
+        array $tools = [],
+        ?string $name = null,
+        ?string $description = null,
     ): self {
-        return new self($input, $tools);
+        return new self($input, $tools, $name, $description);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function name(): ?string
+    {
+        return isset($this->name)
+            ? Str::snake($this->name)
+            : null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setName(string $name): static
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function description(): ?string
+    {
+        return $this->description;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setDescription(string $description): static
+    {
+        $this->description = $description;
+
+        return $this;
     }
 
     /**
      * {@inheritDoc}
      */
     public function __invoke(
-        ChatbotHubResponseMessage $response,
+        ChatbotHubResponseMessage|array $response,
         \Closure $next
-    ): ?ChatbotHubResponseMessage {
-        $innerResource = $this->addInput((string) $response)->run();
+    ): ChatbotHubResponseMessage|null|array {
+        $response = $this->normalizeResponse($response);
+
+        $innerResource = $this
+            ->addInput($response)
+            ->run();
 
         return $next($innerResource);
     }
@@ -178,11 +230,49 @@ class Agent implements AgentInterface
     /**
      * {@inheritDoc}
      */
-    public function asTool(ResourceInterface $resource): Tool
+    public function skipTransformResponse(): static
     {
-        return Tool::make('testing')->using(function () use ($resource) {
-            return $this->run($resource);
-        });
+        $this->skipTransformResponse = true;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function transformResponseUsing(\Closure $handler): static
+    {
+        $this->transformResponseHandler = $handler;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function asTool(): ?Tool
+    {
+        if ($name = $this->name()) {
+            $tool = Tool::make($name)
+                ->using(function (array $arguments) {
+                    $question = Arr::get($arguments, 'question');
+
+                    return $this->addInput($question)->run();
+                })->withProperties([
+                    ToolProperty::make('question', 'string')
+                        ->describe(sprintf('The question to ask the %s agent.',
+                            $name
+                        ))->required(),
+                ]);
+
+            if ($description = $this->description()) {
+                $tool->describe($description);
+            }
+
+            return $tool;
+        }
+
+        return null;
     }
 
     /**
@@ -190,7 +280,7 @@ class Agent implements AgentInterface
      */
     public function run(
         ?ResourceInterface $resource = null
-    ): ChatbotHubResponseMessage {
+    ): ChatbotHubResponseMessage|array {
         $resource = $this->resource($resource);
 
         if (! isset($resource)) {
@@ -215,7 +305,38 @@ class Agent implements AgentInterface
             $resource->withResponseFormat($this->responseFormat);
         }
 
-        return $resource->__invoke();
+        return $this->transformResponse(
+            $resource->__invoke()
+        );
+    }
+
+    /**
+     * Normalize the response message.
+     *
+     * @throws \JsonException
+     */
+    protected function normalizeResponse(
+        ChatbotHubResponseMessage|array $response
+    ): string {
+        return is_array($response)
+            ? (json_encode($response, JSON_THROW_ON_ERROR) ?: '')
+            : $response->__toString();
+    }
+
+    /**
+     * Transform the response message.
+     */
+    protected function transformResponse(
+        ChatbotHubResponseMessage $response
+    ): ChatbotHubResponseMessage|array {
+        if (
+            ! $this->skipTransformResponse
+            && $handler = $this->transformResponseHandler
+        ) {
+            return $handler($response);
+        }
+
+        return $response;
     }
 
     /**

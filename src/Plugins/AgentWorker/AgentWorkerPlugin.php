@@ -11,6 +11,8 @@ use Droath\ChatbotHub\Facades\ChatbotHub;
 use Droath\ChatbotHub\Messages\UserMessage;
 use Droath\PluginManager\Plugin\PluginBase;
 use Droath\ChatbotHub\Messages\SystemMessage;
+use Droath\ChatbotHub\Agents\AgentCoordinator;
+use Droath\ChatbotHub\Agents\Enums\AgentStrategy;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Plugins\AgentToolPluginManager;
 use Droath\ChatbotHub\Agents\Contracts\AgentInterface;
@@ -36,10 +38,11 @@ abstract class AgentWorkerPlugin extends PluginBase implements AgentWorkerPlugin
     ): AgentCoordinatorResponse|array {
         try {
             if ($agent = $this->createAgent()) {
-                $response = $agent
-                    ->addTools($tools)
-                    ->addInputs((array) $message)
-                    ->run($this->resourceInstance());
+                $response = AgentCoordinator::make(
+                    $message,
+                    [$agent],
+                    AgentStrategy::PARALLEL
+                )->run($this->resourceInstance());
 
                 return [
                     $this->handleResponse($response),

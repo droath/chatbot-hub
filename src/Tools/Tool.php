@@ -43,10 +43,6 @@ class Tool implements Arrayable
             throw new \RuntimeException('Tool function is not defined.');
         }
 
-        if (! is_callable($function)) {
-            throw new \RuntimeException('Tool function is not callable.');
-        }
-
         return $function($args);
     }
 

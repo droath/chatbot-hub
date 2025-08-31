@@ -4,17 +4,24 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Agents;
 
-use Droath\ChatbotHub\Agents\Contracts\AgentCoordinatorInterface;
+use Illuminate\Support\Arr;
+use Droath\ChatbotHub\Messages\UserMessage;
+use Droath\ChatbotHub\Messages\SystemMessage;
+use Droath\ChatbotHub\Agents\Enums\AgentStrategy;
 use Droath\ChatbotHub\Agents\Contracts\AgentInterface;
 use Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface;
-use Droath\ChatbotHub\Agents\Enums\AgentStrategy;
-use Droath\ChatbotHub\Agents\ValueObject\AgentCoordinatorResponse;
-use Droath\ChatbotHub\Messages\UserMessage;
 use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
+use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
+use Droath\ChatbotHub\Agents\Contracts\AgentCoordinatorInterface;
+use Droath\ChatbotHub\Agents\ValueObject\AgentCoordinatorResponse;
 
 class AgentCoordinator implements AgentCoordinatorInterface
 {
     protected array $input;
+
+    protected array $responseFormat = [];
+
+    protected ?SystemMessage $systemPrompt = null;
 
     protected ?AgentMemoryInterface $memory = null;
 
@@ -47,6 +54,26 @@ class AgentCoordinator implements AgentCoordinatorInterface
         AgentStrategy $strategy = AgentStrategy::SEQUENTIAL
     ): self {
         return new self($input, $agents, $strategy);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setSystemPrompt(string $prompt): static
+    {
+        $this->systemPrompt = SystemMessage::make($prompt);
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setResponseFormat(array $format): static
+    {
+        $this->responseFormat = $format;
+
+        return $this;
     }
 
     /**
@@ -86,33 +113,49 @@ class AgentCoordinator implements AgentCoordinatorInterface
      */
     public function run(ResourceInterface $resource): AgentCoordinatorResponse
     {
-        $agents = $this->prepareAgents($resource);
-        $responses = (new AgentStrategyExecutor(
-            $agents,
+        $this->prepare($resource);
+
+        return (new AgentCoordinatorStrategyExecutor(
+            $this->agents,
             $this->strategy,
             $resource
         ))->handle();
-
-        return AgentCoordinatorResponse::make(
-            $responses,
-            $agents,
-        );
     }
 
     /**
      * Prepare the agents based on strategy.
-     *
-     * @return \Droath\ChatbotHub\Agents\Contracts\AgentInterface[]
      */
-    protected function prepareAgents(ResourceInterface $resource): array
+    protected function prepare(ResourceInterface $resource): void
     {
-        $agents = $this->agents;
+        $this->prepareAgents($resource);
 
-        if ($this->strategy === AgentStrategy::HANDOFF) {
-            return [];
+        if (
+            ($this->strategy === AgentStrategy::ROUTER)
+            && $resource instanceof HasMessagesInterface
+        ) {
+            $resource->withMessages(array_filter([
+                $this->systemPrompt,
+                ...$this->input,
+            ]));
         }
 
-        foreach ($agents as $index => $agent) {
+        if ($this->strategy === AgentStrategy::PARALLEL) {
+            Arr::map($this->agents, function (AgentInterface $agent) {
+                $agent->addInputs($this->input);
+            });
+        }
+
+        if ($this->strategy === AgentStrategy::SEQUENTIAL) {
+            Arr::first($this->agents)->addInputs($this->input);
+        }
+    }
+
+    /**
+     * Prepare the agents for execution.
+     */
+    protected function prepareAgents(ResourceInterface $resource): void
+    {
+        foreach ($this->agents as $agent) {
             if (! $agent instanceof AgentInterface) {
                 continue;
             }
@@ -121,16 +164,6 @@ class AgentCoordinator implements AgentCoordinatorInterface
             if ($memory = $this->memory) {
                 $agent->setMemory($memory);
             }
-
-            if (
-                $this->strategy === AgentStrategy::PARALLEL
-                /** @phpstan-ignore-next-line */
-                || ($this->strategy === AgentStrategy::SEQUENTIAL && $index === 0)
-            ) {
-                $agent->addInputs($this->input);
-            }
         }
-
-        return $agents;
     }
 }

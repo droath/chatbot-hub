@@ -9,4 +9,15 @@ return [
     'perplexity' => [
         'api_key' => env('PERPLEXITY_API_KEY'),
     ],
+    'managers' => [
+        'agent' => [
+            'namespaces' => ['App\Plugins'],
+        ],
+        'agent_tool' => [
+            'namespaces' => ['App\Plugins'],
+        ],
+        'agent_coordinator' => [
+            'namespaces' => ['App\Plugins'],
+        ],
+    ],
 ];

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Plugins\AgentTool;
 
-use Droath\ChatbotHub\Plugins\Contracts\AgentToolPluginInterface;
 use Droath\ChatbotHub\Tools\Tool;
 use Droath\PluginManager\Plugin\PluginBase;
+use Droath\ChatbotHub\Plugins\Contracts\AgentToolPluginInterface;
 
 /**
  * Define the agent tool plugin base class.
@@ -20,10 +20,6 @@ abstract class AgentToolPlugin extends PluginBase implements AgentToolPluginInte
         array $pluginDefinition
     ) {
         parent::__construct($configuration, $pluginDefinition);
-
-        $this->tool = Tool::make(
-            $this->getPluginId()
-        );
     }
 
     /**
@@ -31,13 +27,19 @@ abstract class AgentToolPlugin extends PluginBase implements AgentToolPluginInte
      */
     public function definition(): Tool
     {
-        return $this->tool
+        return Tool::make($this->getPluginId())
             ->using(function (array $arguments) {
                 return $this->execute($arguments);
             })->withProperties($this->properties());
     }
 
+    /**
+     * Define the tool properties.
+     */
     abstract protected function properties(): array;
 
+    /**
+     * Define the tool execution.
+     */
     abstract protected function execute(array $arguments): mixed;
 }

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Agents\Contracts;
 
-use Droath\ChatbotHub\Messages\MessageBase;
-use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Tools\Tool;
+use Droath\ChatbotHub\Messages\MessageBase;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
 
 /**
  * Define the agent interface.
@@ -17,15 +17,43 @@ interface AgentInterface
     /**
      * Create the agent instance.
      */
-    public static function make(array $inputs, array $tools = []): self;
+    public static function make(
+        array $inputs,
+        array $tools = [],
+        ?string $name = null
+    ): self;
 
     /**
-     * Invoke the agent response.
+     * Get the agent name.
+     */
+    public function name(): ?string;
+
+    /**
+     * Set the agent name.
+     *
+     * @return $this
+     */
+    public function setName(string $name): static;
+
+    /**
+     * Get the agent description on what the agent does.
+     */
+    public function description(): ?string;
+
+    /**
+     * Set the agent description.
+     *
+     * @return $this
+     */
+    public function setDescription(string $description): static;
+
+    /**
+     * Invoke the agent response used in sequential strategy executor.
      */
     public function __invoke(
         ChatbotHubResponseMessage $response,
         \Closure $next
-    ): ?ChatbotHubResponseMessage;
+    ): ChatbotHubResponseMessage|null|array;
 
     /**
      * Set the agent modal.
@@ -68,7 +96,7 @@ interface AgentInterface
     /**
      * Convert the agent instance to a tool.
      */
-    public function asTool(ResourceInterface $resource): Tool;
+    public function asTool(): ?Tool;
 
     /**
      * Set the system prompt to the agent instance.
@@ -99,7 +127,23 @@ interface AgentInterface
     public function setResource(ResourceInterface $resource): static;
 
     /**
+     * Disable the agent response transformer.
+     *
+     * @return $this
+     *
+     * @internal
+     */
+    public function skipTransformResponse(): static;
+
+    /**
+     * Transform the agent response.
+     *
+     * @return $this
+     */
+    public function transformResponseUsing(\Closure $handler): static;
+
+    /**
      * Run the agent implementation.
      */
-    public function run(?ResourceInterface $resource = null): ?ChatbotHubResponseMessage;
+    public function run(?ResourceInterface $resource = null): mixed;
 }

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Plugins;
 
-use Droath\ChatbotHub\Attributes\AgentToolPluginMetadata;
-use Droath\ChatbotHub\Plugins\Contracts\AgentToolPluginInterface;
+use Droath\ChatbotHub\Attributes\AgentPluginMetadata;
+use Droath\ChatbotHub\Plugins\Contracts\AgentPluginInterface;
 use Droath\PluginManager\Discovery\NamespacePluginDiscovery;
 
-class AgentToolPluginManager extends AgentDefaultPluginManager
+class AgentPluginManager extends AgentDefaultPluginManager
 {
     /**
      * {@inheritDoc}
@@ -17,8 +17,8 @@ class AgentToolPluginManager extends AgentDefaultPluginManager
     {
         parent::__construct(new NamespacePluginDiscovery(
             namespaces: $this->resolveNamespaces($namespaces),
-            pluginInterface: AgentToolPluginInterface::class,
-            pluginMetadataAttribute: AgentToolPluginMetadata::class
+            pluginInterface: AgentPluginInterface::class,
+            pluginMetadataAttribute: AgentPluginMetadata::class
         ));
     }
 
@@ -27,6 +27,6 @@ class AgentToolPluginManager extends AgentDefaultPluginManager
      */
     protected function configNamespaceKey(): string
     {
-        return 'chatbot-hub.managers.agent_tool.namespaces';
+        return 'chatbot-hub.managers.agent.namespaces';
     }
 }
