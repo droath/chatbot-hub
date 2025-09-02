@@ -93,12 +93,12 @@ final class AgentCoordinatorStrategyExecutor
         if ($agent instanceof AgentInterface) {
             $response = $agent->run(clone $this->resource);
 
-            $message = Pipeline::send($response)
+            $agentResponse = Pipeline::send($response)
                 ->through($this->agents)
                 ->thenReturn();
 
             $coordinatorResponse = $this->invokeCoordinatorResource(
-                [UserMessage::make((string) $message)]
+                $this->toUserMessages([$agentResponse])
             );
 
             return AgentCoordinatorResponse::make(
@@ -106,7 +106,7 @@ final class AgentCoordinatorStrategyExecutor
                 strategy: $this->strategy,
                 resource: $this->resource,
                 coordinatorResponse: $coordinatorResponse,
-                agentResponses: [$message]
+                agentResponses: [$agentResponse]
             );
         }
 

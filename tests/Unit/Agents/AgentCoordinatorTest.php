@@ -1,16 +1,16 @@
 <?php
 
+use OpenAI\Testing\ClientFake;
+use Illuminate\Support\Collection;
 use Droath\ChatbotHub\Agents\Agent;
+use Droath\ChatbotHub\Facades\ChatbotHub;
 use Droath\ChatbotHub\Agents\AgentCoordinator;
 use Droath\ChatbotHub\Agents\Enums\AgentStrategy;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
-use Droath\ChatbotHub\Facades\ChatbotHub;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Testing\Support\ResourceResponsesHelper;
 use Droath\ChatbotHub\Agents\ValueObject\AgentCoordinatorResponse;
-use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Collection;
-use OpenAI\Testing\ClientFake;
 
 uses(RefreshDatabase::class);
 uses(ResourceResponsesHelper::class);
@@ -110,6 +110,7 @@ test('sequential agent coordinator', closure: function () {
             Agent::make()->setSystemPrompt('Create a website content.'),
             Agent::make()->setSystemPrompt('Enhance the website content for SEO.'),
         ],
+        AgentStrategy::SEQUENTIAL
     )->run($resource);
 
     $response
