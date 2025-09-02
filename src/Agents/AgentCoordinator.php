@@ -14,6 +14,7 @@ use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Agents\Contracts\AgentCoordinatorInterface;
 use Droath\ChatbotHub\Agents\ValueObject\AgentCoordinatorResponse;
+use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 
 class AgentCoordinator implements AgentCoordinatorInterface
 {
@@ -51,7 +52,7 @@ class AgentCoordinator implements AgentCoordinatorInterface
     public static function make(
         string|array $input,
         array $agents,
-        AgentStrategy $strategy = AgentStrategy::SEQUENTIAL
+        AgentStrategy $strategy
     ): self {
         return new self($input, $agents, $strategy);
     }
@@ -128,6 +129,13 @@ class AgentCoordinator implements AgentCoordinatorInterface
     protected function prepare(ResourceInterface $resource): void
     {
         $this->prepareAgents($resource);
+
+        if (
+            $resource instanceof HasResponseFormatInterface
+            && ($responseFormat = $this->responseFormat)
+        ) {
+            $resource->withResponseFormat($responseFormat);
+        }
 
         if (
             ($this->strategy === AgentStrategy::ROUTER)

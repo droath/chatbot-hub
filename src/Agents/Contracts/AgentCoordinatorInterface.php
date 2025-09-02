@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub\Agents\Contracts;
 
 use Droath\ChatbotHub\Agents\Enums\AgentStrategy;
-use Droath\ChatbotHub\Agents\ValueObject\AgentCoordinatorResponse;
 use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
+use Droath\ChatbotHub\Agents\ValueObject\AgentCoordinatorResponse;
 
 /**
  * Define the agent coordinator interface.
@@ -19,7 +19,7 @@ interface AgentCoordinatorInterface
     public static function make(
         string|array $input,
         array $agents,
-        AgentStrategy $strategy = AgentStrategy::SEQUENTIAL
+        AgentStrategy $strategy
     ): self;
 
     /**

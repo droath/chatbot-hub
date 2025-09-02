@@ -98,7 +98,7 @@ final class AgentCoordinatorStrategyExecutor
                 ->thenReturn();
 
             $coordinatorResponse = $this->invokeCoordinatorResource(
-                [$message]
+                [UserMessage::make((string) $message)]
             );
 
             return AgentCoordinatorResponse::make(
@@ -148,12 +148,12 @@ final class AgentCoordinatorStrategyExecutor
     protected function toUserMessages(array $responses): array
     {
         return collect($responses)
-            ->transform(function ($response) {
+            ->map(function ($response) {
                 $response = is_array($response)
                     ? json_encode($response, JSON_THROW_ON_ERROR)
                     : $response->__toString();
 
                 return UserMessage::make($response);
-            })->toArray();
+            })->values()->all();
     }
 }

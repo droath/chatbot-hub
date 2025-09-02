@@ -31,7 +31,7 @@ final readonly class ChatbotHubResponseMessage
      */
     public function toArray(): array
     {
-        if (Str::isJson($this->message)) {
+        if ($this->containsJson()) {
             return json_decode(
                 $this->message,
                 true,
@@ -41,6 +41,11 @@ final readonly class ChatbotHubResponseMessage
         }
 
         return [];
+    }
+
+    public function containsJson(): bool
+    {
+        return Str::isJson($this->message);
     }
 
     public function __toString(): string

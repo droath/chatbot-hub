@@ -84,6 +84,10 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingI
                 $parts = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
                 foreach ($parts as $value) {
+                    if (! is_string($value)) {
+                        continue;
+                    }
+
                     if (Str::startsWith($value, 'data:text')) {
                         $contents[] = [
                             'type' => 'text',
@@ -113,7 +117,9 @@ class Openai extends ChatbotHubDriver implements HasChatInterface, HasEmbeddingI
                 return [];
             }
 
-            return $contents;
+            return ! empty($contents)
+                ? $contents
+                : $content;
         }
 
         return $content;

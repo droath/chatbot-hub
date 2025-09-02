@@ -7,6 +7,7 @@ namespace Droath\ChatbotHub\Plugins\Agents;
 use Illuminate\Support\Str;
 use Droath\ChatbotHub\Agents\Agent;
 use Droath\PluginManager\Plugin\PluginBase;
+use Droath\ChatbotHub\Messages\SystemMessage;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Plugins\Concerns\HasChatbotResource;
 use Droath\ChatbotHub\Plugins\Contracts\AgentPluginInterface;
@@ -57,7 +58,7 @@ abstract class AgentPlugin extends PluginBase implements AgentPluginInterface
     /**
      * Define the agent system instruction.
      */
-    abstract protected function systemInstruction(): ?string;
+    abstract protected function systemInstruction(): SystemMessage|string|null;
 
     /**
      * Define the agent-specific instruction.
@@ -88,7 +89,7 @@ abstract class AgentPlugin extends PluginBase implements AgentPluginInterface
      */
     protected function transformResponse(
         ChatbotHubResponseMessage|array $response
-    ): ChatbotHubResponseMessage|array {
+    ): mixed {
         return $response;
     }
 

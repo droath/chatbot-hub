@@ -6,6 +6,7 @@ namespace Droath\ChatbotHub\Agents\Contracts;
 
 use Droath\ChatbotHub\Tools\Tool;
 use Droath\ChatbotHub\Messages\MessageBase;
+use Droath\ChatbotHub\Messages\SystemMessage;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
 
@@ -103,7 +104,7 @@ interface AgentInterface
      *
      * @return $this
      */
-    public function setSystemPrompt(string $prompt): static;
+    public function setSystemPrompt(SystemMessage|string $prompt): static;
 
     /**
      * Set the response format to the agent instance.

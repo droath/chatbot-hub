@@ -187,11 +187,11 @@ class Agent implements AgentInterface
     /**
      * {@inheritDoc}
      */
-    public function setSystemPrompt(string $prompt): static
+    public function setSystemPrompt(SystemMessage|string $prompt): static
     {
         $this->input = Arr::prepend(
             $this->input,
-            SystemMessage::make($prompt)
+            is_string($prompt) ? SystemMessage::make($prompt) : $prompt,
         );
 
         return $this;
@@ -257,7 +257,7 @@ class Agent implements AgentInterface
                 ->using(function (array $arguments) {
                     $question = Arr::get($arguments, 'question');
 
-                    return $this->addInput($question)->run();
+                    return (string) $this->addInput($question)->run();
                 })->withProperties([
                     ToolProperty::make('question', 'string')
                         ->describe(sprintf('The question to ask the %s agent.',
@@ -280,7 +280,7 @@ class Agent implements AgentInterface
      */
     public function run(
         ?ResourceInterface $resource = null
-    ): ChatbotHubResponseMessage|array {
+    ): mixed {
         $resource = $this->resource($resource);
 
         if (! isset($resource)) {
@@ -327,8 +327,8 @@ class Agent implements AgentInterface
      * Transform the response message.
      */
     protected function transformResponse(
-        ChatbotHubResponseMessage $response
-    ): ChatbotHubResponseMessage|array {
+        mixed $response
+    ): mixed {
         if (
             ! $this->skipTransformResponse
             && $handler = $this->transformResponseHandler
