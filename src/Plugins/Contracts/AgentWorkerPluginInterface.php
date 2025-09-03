@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Plugins\Contracts;
 
-use Droath\ChatbotHub\Agents\ValueObject\AgentCoordinatorResponse;
 use Droath\PluginManager\Contracts\PluginInterface;
+use Droath\ChatbotHub\Agents\ValueObject\AgentCoordinatorResponse;
 
 /**
  * Define the agent worker plugin interface.
+ *
+ * @deperecated
  */
 interface AgentWorkerPluginInterface extends PluginInterface
 {

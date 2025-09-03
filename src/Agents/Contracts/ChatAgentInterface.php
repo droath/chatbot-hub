@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Agents\Contracts;
 
-use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Messages\UserMessage;
-use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
+use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
+use Droath\ChatbotHub\Resources\Contracts\ResourceInterface;
 
+/**
+ * @deprecated
+ */
 interface ChatAgentInterface
 {
     /**

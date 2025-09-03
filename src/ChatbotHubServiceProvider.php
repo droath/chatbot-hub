@@ -33,7 +33,7 @@ class ChatbotHubServiceProvider extends PackageServiceProvider
         });
 
         $this->app->singleton(AgentWorkerPluginManager::class, function () {
-            return new AgentWorkerPluginManager;
+            return new AgentWorkerPluginManager();
         });
     }
 

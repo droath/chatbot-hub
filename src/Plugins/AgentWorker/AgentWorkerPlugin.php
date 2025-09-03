@@ -24,6 +24,8 @@ use Droath\ChatbotHub\Plugins\Contracts\AgentWorkerPluginInterface;
 
 /**
  * Define the agent worker plugin base.
+ *
+ * @deprecated
  */
 abstract class AgentWorkerPlugin extends PluginBase implements AgentWorkerPluginInterface
 {
