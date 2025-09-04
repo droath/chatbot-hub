@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub;
 
 use Droath\ChatbotHub\Drivers\Enums\ChatbotProvider;
+use Droath\ChatbotHub\Drivers\Claude;
 use Droath\ChatbotHub\Drivers\Openai;
 use Droath\ChatbotHub\Drivers\Perplexity;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\HttpFactory;
+use Anthropic;
 use Illuminate\Support\Manager;
 use SoftCreatR\PerplexityAI\PerplexityAI;
 
@@ -56,5 +58,15 @@ class ChatbotHubClient extends Manager
                 config('chatbot-hub.perplexity.api_key')
             )
         );
+    }
+
+    /**
+     * Create the Claude client class.
+     */
+    protected function createClaudeDriver(): Claude
+    {
+        $client = Anthropic::client(config('chatbot-hub.claude.api_key'));
+
+        return new Claude($client);
     }
 }
