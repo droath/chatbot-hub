@@ -35,11 +35,7 @@ describe('Claude Driver', function () {
         $client = new ClientFake();
         $driver = new Claude($client);
 
-        $reflection = new ReflectionClass($driver);
-        $clientProperty = $reflection->getProperty('client');
-        $clientProperty->setAccessible(true);
-
-        expect($clientProperty->getValue($driver))->toBeInstanceOf(ClientContract::class);
+        expect(invade($driver)->client)->toBeInstanceOf(ClientContract::class);
     });
 
     describe('Authentication and API Connection', function () {
@@ -64,11 +60,7 @@ describe('Claude Driver', function () {
             $client = new ClientFake();
             $driver = new Claude($client);
 
-            $reflection = new ReflectionClass($driver);
-            $clientProperty = $reflection->getProperty('client');
-            $clientProperty->setAccessible(true);
-
-            expect($clientProperty->getValue($driver))->toBe($client);
+            expect(invade($driver)->client)->toBe($client);
         });
 
         test('client is properly protected and accessible to subclasses', function () {
@@ -113,11 +105,7 @@ describe('Claude Driver', function () {
 
             $chatResource = $driver->chat();
 
-            $reflection = new ReflectionClass($chatResource);
-            $clientProperty = $reflection->getProperty('client');
-            $clientProperty->setAccessible(true);
-
-            expect($clientProperty->getValue($chatResource))->toBe($client);
+            expect(invade($chatResource)->client)->toBe($client);
         });
     });
 

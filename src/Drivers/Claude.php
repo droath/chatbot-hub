@@ -70,7 +70,7 @@ class Claude extends ChatbotHubDriver implements HasChatInterface
      */
     public function chat(): ChatResourceInterface
     {
-        return new ClaudeChatResource($this->client);
+        return new ClaudeChatResource($this->client, $this);
     }
 
     /**
