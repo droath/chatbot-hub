@@ -43,7 +43,7 @@ describe('Claude Driver', function () {
             $client = new ClientFake();
             $driver = new Claude($client);
 
-            expect($driver->getClient())
+            expect($driver->client())
                 ->toBeInstanceOf(ClientContract::class)
                 ->toBe($client);
         });
@@ -52,8 +52,8 @@ describe('Claude Driver', function () {
             $client = new ClientFake();
             $driver = new Claude($client);
 
-            expect($driver->getClient())->toBe($client)
-                ->and(method_exists($driver, 'getClient'))->toBeTrue();
+            expect($driver->client())->toBe($client)
+                ->and(method_exists($driver, 'client'))->toBeTrue();
         });
 
         test('maintains client reference through constructor injection', function () {
@@ -83,9 +83,9 @@ describe('Claude Driver', function () {
             $driver1 = new Claude($client1);
             $driver2 = new Claude($client2);
 
-            expect($driver1->getClient())->toBe($client1)
-                ->and($driver2->getClient())->toBe($client2)
-                ->and($driver1->getClient())->not->toBe($driver2->getClient());
+            expect($driver1->client())->toBe($client1)
+                ->and($driver2->client())->toBe($client2)
+                ->and($driver1->client())->not->toBe($driver2->client());
         });
     });
 
@@ -303,7 +303,7 @@ describe('Claude Driver', function () {
             $errors = $driver->validateModel('gpt-4-turbo');
 
             expect($errors)->toHaveCount(1)
-                ->and($errors[0])->toContain('has invalid format');
+                ->and($errors[0])->toContain('has an invalid format');
         });
 
         test('detects invalid model format - too short', function () {
@@ -313,7 +313,7 @@ describe('Claude Driver', function () {
             $errors = $driver->validateModel('claude-3');
 
             expect($errors)->toHaveCount(1)
-                ->and($errors[0])->toContain('has invalid format');
+                ->and($errors[0])->toContain('has an invalid format');
         });
 
         test('detects invalid model format - too long', function () {
@@ -324,7 +324,7 @@ describe('Claude Driver', function () {
             $errors = $driver->validateModel($tooLongModel);
 
             expect($errors)->toHaveCount(1)
-                ->and($errors[0])->toContain('has invalid format');
+                ->and($errors[0])->toContain('has an invalid format');
         });
 
         test('accepts various valid claude model formats', function () {

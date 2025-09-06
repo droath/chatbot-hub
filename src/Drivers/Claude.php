@@ -66,6 +66,14 @@ class Claude extends ChatbotHubDriver implements HasChatInterface
     }
 
     /**
+     * Get the Claude client instance.
+     */
+    public function client(): ClientContract
+    {
+        return $this->client;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function chat(): ChatResourceInterface
@@ -74,30 +82,19 @@ class Claude extends ChatbotHubDriver implements HasChatInterface
     }
 
     /**
-     * Get the Claude client instance.
-     */
-    public function getClient(): ClientContract
-    {
-        return $this->client;
-    }
-
-    /**
      * Validate the Claude configuration
      */
     public function validateConfiguration(): array
     {
         $errors = [];
-
-        // Check if API key is configured
         $apiKey = config('chatbot-hub.claude.api_key');
+
         if (empty($apiKey)) {
             $errors[] = 'Claude API key is not configured. Set ANTHROPIC_API_KEY environment variable.';
             Log::warning('Claude driver: API key not configured');
         } elseif (! $this->isValidApiKeyFormat($apiKey)) {
             $errors[] = 'Claude API key format is invalid. Should start with "sk-ant-".';
             Log::error('Claude driver: Invalid API key format provided');
-        } else {
-            Log::info('Claude driver: Configuration validation passed');
         }
 
         return $errors;
@@ -114,10 +111,8 @@ class Claude extends ChatbotHubDriver implements HasChatInterface
             $errors[] = 'Model name cannot be empty.';
             Log::warning('Claude driver: Empty model name provided for validation');
         } elseif (! $this->isValidModelFormat($model)) {
-            $errors[] = "Model '{$model}' has invalid format. Expected format like 'claude-3-sonnet-20240229'.";
+            $errors[] = "Model '{$model}' has an invalid format. Expected format like 'claude-3-sonnet-20240229'.";
             Log::warning("Claude driver: Invalid model format provided: {$model}");
-        } else {
-            Log::info("Claude driver: Model validation passed for: {$model}");
         }
 
         return $errors;
@@ -132,11 +127,10 @@ class Claude extends ChatbotHubDriver implements HasChatInterface
     }
 
     /**
-     * Check if model name has basic valid format
+     * Check if the model name has a basic valid format
      */
     protected function isValidModelFormat(string $model): bool
     {
-        // Basic format validation - should start with 'claude-' and have reasonable length
         return str_starts_with($model, 'claude-') && strlen($model) >= 10 && strlen($model) <= 50;
     }
 }

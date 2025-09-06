@@ -2,6 +2,7 @@
 composer.lock
 /vendor
 
+.env*
 .claude/*
 .agent-os/*
 

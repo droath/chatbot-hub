@@ -94,7 +94,7 @@ describe('ClaudeChatResource', function () {
             ->withProperties([
                 ToolProperty::make('location', 'string')
                     ->describe('The location to get weather for')
-                    ->required()
+                    ->required(),
             ]);
 
         $resource->withTools([$tool]);
@@ -108,7 +108,7 @@ describe('ClaudeChatResource', function () {
             ->withProperties([
                 ToolProperty::make('param', 'string')
                     ->describe('A parameter')
-                    ->required()
+                    ->required(),
             ]);
 
         $transformed = ClaudeChatResource::transformTool($tool);
@@ -126,8 +126,8 @@ describe('ClaudeChatResource', function () {
         $driver = new Claude($client);
         $resource = new ClaudeChatResource($client, $driver);
 
-        $streamProcess = fn(string $chunk, bool $initialized) => null;
-        $streamFinished = fn(ChatbotHubResponseMessage $response) => null;
+        $streamProcess = fn (string $chunk, bool $initialized) => null;
+        $streamFinished = fn (ChatbotHubResponseMessage $response) => null;
 
         $newResource = $resource->usingStream($streamProcess, $streamFinished);
 

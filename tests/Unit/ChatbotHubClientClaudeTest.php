@@ -29,7 +29,7 @@ describe('ChatbotHubClient Claude Integration', function () {
 
         $driver = $hubClient->driver(ChatbotProvider::CLAUDE->value);
 
-        expect($driver->getClient())->toBeInstanceOf(ClientContract::class);
+        expect($driver->client())->toBeInstanceOf(ClientContract::class);
     });
 
     test('claude driver uses configured api key', function () {
@@ -39,7 +39,7 @@ describe('ChatbotHubClient Claude Integration', function () {
         $driver = $hubClient->driver(ChatbotProvider::CLAUDE->value);
 
         expect($driver)->toBeInstanceOf(Claude::class)
-            ->and($driver->getClient())->toBeInstanceOf(ClientContract::class);
+            ->and($driver->client())->toBeInstanceOf(ClientContract::class);
     });
 
     test('claude is available as provider option', function () {

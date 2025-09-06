@@ -174,24 +174,24 @@ class ClaudeChatResource implements ChatResourceInterface, HasDriverInterface, H
     protected function handleStream(
         StreamResponse $stream
     ): ?ChatbotHubResponseMessage {
-        $streamContent = null;
         $toolUseBlocks = [];
+        $streamContent = null;
 
         foreach ($stream as $response) {
             if ($response->type === 'content_block_delta') {
                 $delta = $response->delta;
 
-                if (isset($delta['text'])) {
-                    $streamContent = $this->processStreamContent(
-                        $delta['text'],
-                        $streamContent
-                    );
-                }
-
-                if (isset($delta['partial_json'])) {
+                if (isset($delta->partial_json)) {
                     $toolUseBlocks = $this->processStreamToolUse(
                         $response,
                         $toolUseBlocks
+                    );
+                }
+
+                if (isset($delta->text)) {
+                    $streamContent = $this->processStreamContent(
+                        $delta->text,
+                        $streamContent
                     );
                 }
             }
