@@ -73,8 +73,7 @@ class OpenaiResponsesResource implements HasDriverInterface, HasMessagesInterfac
      */
     protected function createResourceResponse(
         array $parameters
-    ): StreamResponse|CreateResponse
-    {
+    ): StreamResponse|CreateResponse {
         return ! $this->stream
             ? $this->resource->create($parameters)
             : $this->resource->createStreamed($parameters);
@@ -86,8 +85,7 @@ class OpenaiResponsesResource implements HasDriverInterface, HasMessagesInterfac
     protected function processStreamContent(
         OutputTextDelta $textDelta,
         ?string $streamContent
-    ): ?string
-    {
+    ): ?string {
         if ($chunk = $textDelta->delta) {
             $processorMethod = $this->useStreamBuffer
                 ? 'handleStreamBufferProcess'
@@ -112,8 +110,7 @@ class OpenaiResponsesResource implements HasDriverInterface, HasMessagesInterfac
     protected function handleStreamProcess(
         string $chunk,
         ?string $streamContent
-    ): void
-    {
+    ): void {
         $streamProcess = $this->streamProcess;
 
         if (is_callable($streamProcess)) {
@@ -133,8 +130,7 @@ class OpenaiResponsesResource implements HasDriverInterface, HasMessagesInterfac
     protected function handleStreamBufferProcess(
         string $chunk,
         ?string $streamContent
-    ): void
-    {
+    ): void {
         $streamBufferProcess = $this->streamBufferProcess;
 
         if (
@@ -144,7 +140,7 @@ class OpenaiResponsesResource implements HasDriverInterface, HasMessagesInterfac
                 $this->streamBuffer
             )
         ) {
-            $partial = $this->streamBuffer . $chunk;
+            $partial = $this->streamBuffer.$chunk;
 
             $this->handleStreamProcess(
                 $partial,
@@ -189,8 +185,7 @@ class OpenaiResponsesResource implements HasDriverInterface, HasMessagesInterfac
      */
     protected function invokeTool(
         OutputFunctionToolCall $toolCall
-    ): null|string|ChatbotHubResponseMessage
-    {
+    ): null|string|ChatbotHubResponseMessage {
         $tool = $this->tools->firstWhere('name', $toolCall->name);
 
         if ($tool instanceof Tool) {
@@ -215,8 +210,7 @@ class OpenaiResponsesResource implements HasDriverInterface, HasMessagesInterfac
      */
     protected function handleFunctionToolCall(
         OutputFunctionToolCall $output
-    ): CreateResponse|StreamResponse
-    {
+    ): CreateResponse|StreamResponse {
         $parameters = $this->resourceParameters();
 
         $parameters['input'][] = $output->toArray();
@@ -235,8 +229,7 @@ class OpenaiResponsesResource implements HasDriverInterface, HasMessagesInterfac
      */
     protected function handleResponse(
         StreamResponse|CreateResponse $response
-    ): ?ChatbotHubResponseMessage
-    {
+    ): ?ChatbotHubResponseMessage {
         try {
             return match (true) {
                 $response instanceof StreamResponse => $this->handleStream($response),
@@ -255,8 +248,7 @@ class OpenaiResponsesResource implements HasDriverInterface, HasMessagesInterfac
      */
     protected function handleSynchronous(
         CreateResponse $response
-    ): ?ChatbotHubResponseMessage
-    {
+    ): ?ChatbotHubResponseMessage {
         foreach ($response->output as $output) {
             if (
                 $output instanceof OutputFunctionToolCall
@@ -276,8 +268,7 @@ class OpenaiResponsesResource implements HasDriverInterface, HasMessagesInterfac
      */
     protected function handleStream(
         StreamResponse $stream,
-    ): ?ChatbotHubResponseMessage
-    {
+    ): ?ChatbotHubResponseMessage {
         $streamContent = null;
 
         /** @var \OpenAI\Responses\Responses\CreateStreamedResponse $response */
