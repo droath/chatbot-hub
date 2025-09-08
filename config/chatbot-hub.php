@@ -9,6 +9,10 @@ return [
     'perplexity' => [
         'api_key' => env('PERPLEXITY_API_KEY'),
     ],
+    'claude' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        'base_url' => env('ANTHROPIC_BASE_URL'),
+    ],
     'managers' => [
         'agent' => [
             'namespaces' => ['App\Plugins'],

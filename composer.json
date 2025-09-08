@@ -22,6 +22,7 @@
         "droath/plugin-manager": "^1.0||dev-linked",
         "illuminate/contracts": "^10.0||^11.0||^12.0",
         "livewire/livewire": "^3.5",
+        "mozex/anthropic-php": "^1.1",
         "openai-php/client": "^0.15.0||dev-main",
         "softcreatr/php-perplexity-ai-sdk": "^2.0",
         "spatie/laravel-package-tools": "^1.16"
@@ -38,7 +39,8 @@
         "phpstan/phpstan-deprecation-rules": "^2.0",
         "phpstan/phpstan-phpunit": "^2.0",
         "spatie/invade": "^2.1",
-        "vildanbina/composer-upgrader": "^1.0"
+        "vildanbina/composer-upgrader": "^1.0",
+        "vlucas/phpdotenv": "^5.6"
     },
     "autoload": {
         "psr-4": {
