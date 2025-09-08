@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 class Claude extends ChatbotHubDriver implements HasChatInterface
 {
     /** @var string */
-    public const string DEFAULT_MODEL = 'claude-3-5-sonnet-20241022';
+    public const string DEFAULT_MODEL = 'claude-3-haiku-20240307';
 
     public function __construct(
         protected ClientContract $client

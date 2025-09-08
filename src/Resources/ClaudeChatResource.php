@@ -7,13 +7,14 @@ namespace Droath\ChatbotHub\Resources;
 use Anthropic\Contracts\ClientContract;
 use Anthropic\Responses\Messages\CreateResponse;
 use Anthropic\Responses\Messages\StreamResponse;
-use Anthropic\Responses\Messages\CreateStreamedResponseDelta;
 use Droath\ChatbotHub\Drivers\Claude;
+use Anthropic\Responses\Messages\CreateResponseContent;
 use Droath\ChatbotHub\Drivers\Contracts\DriverInterface;
 use Droath\ChatbotHub\Enums\ChatbotRoles;
 use Droath\ChatbotHub\Tools\Tool;
 use Droath\ChatbotHub\Resources\Concerns\WithMessages;
 use Droath\ChatbotHub\Resources\Concerns\WithModel;
+use Anthropic\Responses\Messages\CreateStreamedResponse;
 use Droath\ChatbotHub\Resources\Concerns\WithResponseFormat;
 use Droath\ChatbotHub\Resources\Concerns\WithTools;
 use Droath\ChatbotHub\Drivers\Concerns\HasStreaming;
@@ -22,16 +23,17 @@ use Droath\ChatbotHub\Resources\Contracts\HasDriverInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
-use Droath\ChatbotHub\Resources\Contracts\HasToolTransformerInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
 use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Define the Claude chat resource.
+ * Claude Chat Resource for handling conversations with Anthropic's Claude API.
+ *
+ * This resource provides functionality for both streaming and synchronous chat
+ * responses, tool calling, and proper error handling for the Claude API.
  */
-class ClaudeChatResource implements ChatResourceInterface, HasDriverInterface, HasMessagesInterface, HasResponseFormatInterface, HasStreamingInterface, HasToolsInterface, HasToolTransformerInterface
+class ClaudeChatResource implements ChatResourceInterface, HasDriverInterface, HasMessagesInterface, HasResponseFormatInterface, HasStreamingInterface, HasToolsInterface
 {
     use HasStreaming;
     use WithMessages;
@@ -49,67 +51,10 @@ class ClaudeChatResource implements ChatResourceInterface, HasDriverInterface, H
     /**
      * {@inheritDoc}
      */
-    public static function transformTool(Tool $tool): array
-    {
-        $data = $tool->toArray();
-
-        $properties = [];
-        if ($data['properties'] instanceof Collection) {
-            foreach ($data['properties'] as $property) {
-                $propData = $property->toArray();
-                $properties[$propData['name']] = [
-                    'type' => $propData['type'],
-                    'description' => $propData['description'],
-                ];
-
-                if (! empty($propData['enum'])) {
-                    $properties[$propData['name']]['enum'] = $propData['enum'];
-                }
-            }
-        }
-
-        return [
-            'name' => $data['name'],
-            'description' => $data['description'],
-            'input_schema' => [
-                'type' => 'object',
-                'properties' => $properties,
-                'required' => $data['required'] ?? [],
-            ],
-        ];
-    }
-
-    /**
-     * Get all supported Claude models.
-     */
-    public static function getSupportedModels(): array
-    {
-        return [
-            'claude-3-5-sonnet-20241022',
-            'claude-3-5-sonnet-20240620',
-            'claude-3-5-haiku-20241022',
-            'claude-3-opus-20240229',
-            'claude-3-sonnet-20240229',
-            'claude-3-haiku-20240307',
-        ];
-    }
-
-    /**
-     * Validate if a model is supported.
-     */
-    public static function isModelSupported(string $model): bool
-    {
-        return in_array($model, self::getSupportedModels(), true);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function __invoke(): ?ChatbotHubResponseMessage
     {
         $parameters = $this->resourceParameters();
 
-        // Return null if no messages to send
         if (empty($parameters)) {
             return null;
         }
@@ -128,7 +73,11 @@ class ClaudeChatResource implements ChatResourceInterface, HasDriverInterface, H
     }
 
     /**
-     * Create the chat resource response.
+     * Create the chat resource response using the Anthropic client.
+     *
+     * @param array $parameters The API parameters
+     *
+     * @return StreamResponse|CreateResponse The API response
      */
     protected function createResourceResponse(
         array $parameters
@@ -139,7 +88,11 @@ class ClaudeChatResource implements ChatResourceInterface, HasDriverInterface, H
     }
 
     /**
-     * Handle all chat responses.
+     * Handle all chat responses with proper error handling.
+     *
+     * @param object $response The API response object
+     *
+     * @return ChatbotHubResponseMessage|null The processed response message
      */
     protected function handleResponse(object $response): ?ChatbotHubResponseMessage
     {
@@ -149,68 +102,95 @@ class ClaudeChatResource implements ChatResourceInterface, HasDriverInterface, H
                 $response instanceof CreateResponse => $this->handleSynchronous($response),
                 default => throw new \RuntimeException('Unexpected response type')
             };
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             return $this->handleException($exception);
         }
     }
 
     /**
-     * Handle the chat synchronous process.
+     * Handle synchronous (non-streaming) chat responses.
+     *
+     * @param CreateResponse $response The synchronous response
+     *
+     * @return ChatbotHubResponseMessage|null The processed response message
      */
     protected function handleSynchronous(
         CreateResponse $response
     ): ?ChatbotHubResponseMessage {
-        // Handle tool calls if present
         if ($this->hasToolUse($response)) {
-            return $this->handleToolUse($response);
+            $toolCalls = collect($response->content)
+                ->filter(fn ($content) => $content->type === 'tool_use')
+                ->toArray();
+
+            return $this->handleResponse(
+                $this->handleToolCall($toolCalls)
+            );
         }
 
-        return $this->processResponse($response);
+        $content = $response->content[0]->text ?? null;
+
+        if ($content === null) {
+            return null;
+        }
+
+        return ChatbotHubResponseMessage::fromString($content);
     }
 
     /**
-     * Handle the chat stream process.
+     * Handle streaming chat responses with real-time processing.
+     *
+     * @param StreamResponse $stream The streaming response
+     *
+     * @return ChatbotHubResponseMessage|null The final processed response
+     *
+     * @throws \JsonException
      */
     protected function handleStream(
         StreamResponse $stream
     ): ?ChatbotHubResponseMessage {
-        $toolUseBlocks = [];
-        $streamContent = null;
+        $streamContent = '';
+        $streamToolUse = [];
 
         foreach ($stream as $response) {
-            if ($response->type === 'content_block_delta') {
-                $delta = $response->delta;
+            $deltaStopReason = $response->delta->stop_reason;
 
-                if (isset($delta->partial_json)) {
-                    $toolUseBlocks = $this->processStreamToolUse(
-                        $response,
-                        $toolUseBlocks
+            $streamContent = $this->processStreamContent(
+                $response,
+                $streamContent
+            );
+
+            $streamToolUse = $this->processStreamToolUse(
+                $response,
+                $streamToolUse
+            );
+
+            if ($this->isStreamMessageComplete($response)) {
+                if ($deltaStopReason === 'tool_use' && ! empty($streamToolUse)) {
+                    foreach ($streamToolUse as &$toolUse) {
+                        $toolUse['input'] = json_decode(
+                            $toolUse['input'],
+                            true,
+                            512,
+                            JSON_THROW_ON_ERROR
+                        );
+                        $toolUse = CreateResponseContent::from($toolUse);
+                    }
+
+                    return $this->handleResponse(
+                        $this->handleToolCall($streamToolUse)
                     );
                 }
 
-                if (isset($delta->text)) {
-                    $streamContent = $this->processStreamContent(
-                        $delta->text,
-                        $streamContent
-                    );
+                if ($deltaStopReason === 'end_turn' && ! empty($streamContent)) {
+                    $streamFinished = $this->streamFinished;
+                    $streamResponse = ChatbotHubResponseMessage::fromString($streamContent);
+
+                    if (is_callable($streamFinished)) {
+                        $streamFinished($streamResponse);
+                    }
+
+                    return $streamResponse;
                 }
-            }
-
-            if ($response->type === 'message_stop') {
-                if (! empty($toolUseBlocks)) {
-                    return $this->executeToolCalls($toolUseBlocks);
-                }
-
-                $streamResponse = ChatbotHubResponseMessage::fromString(
-                    $streamContent ?? ''
-                );
-
-                $streamFinished = $this->streamFinished;
-                if (is_callable($streamFinished)) {
-                    $streamFinished($streamResponse);
-                }
-
-                return $streamResponse;
             }
         }
 
@@ -218,42 +198,71 @@ class ClaudeChatResource implements ChatResourceInterface, HasDriverInterface, H
     }
 
     /**
-     * Process the stream content.
+     * Determine if the streaming message is complete.
+     *
+     * @param CreateStreamedResponse $response The streaming response chunk
+     *
+     * @return bool True if the message is complete
+     */
+    protected function isStreamMessageComplete(
+        CreateStreamedResponse $response
+    ): bool {
+        return $response->type === 'message_stop' || (
+            $response->type === 'message_delta'
+            && isset($response->delta->stop_reason)
+            && $response->delta->stop_reason !== null
+        );
+    }
+
+    /**
+     * Process streaming content chunks and accumulate text.
+     *
+     * @param CreateStreamedResponse $response The streaming response chunk
+     * @param string $streamContent The current accumulated content
+     *
+     * @return string The updated accumulated content
      */
     protected function processStreamContent(
-        string $chunk,
-        ?string $streamContent
-    ): ?string {
-        if ($chunk) {
+        CreateStreamedResponse $response,
+        string $streamContent
+    ): string {
+        if (
+            $response->type === 'content_block_delta'
+            && ($delta = $response->delta ?? null)
+            && ($text = $delta->text ?? null)
+        ) {
             $processorMethod = $this->useStreamBuffer
                 ? 'handleStreamBufferProcess'
                 : 'handleStreamProcess';
 
             if (method_exists($this, $processorMethod)) {
                 $this->$processorMethod(
-                    $chunk,
+                    $text,
                     $streamContent
                 );
             }
 
-            $streamContent .= $chunk;
+            $streamContent .= $text;
         }
 
         return $streamContent;
     }
 
     /**
-     * Handle the standard stream process.
+     * Handle standard streaming process with chunk-by-chunk processing.
+     *
+     * @param string $chunk The text chunk received
+     * @param string $streamContent The current accumulated content
      */
     protected function handleStreamProcess(
         string $chunk,
-        ?string $streamContent
+        string $streamContent
     ): void {
         $streamProcess = $this->streamProcess;
 
         if (is_callable($streamProcess)) {
             $partial = $chunk;
-            $initialized = is_null($streamContent);
+            $initialized = empty($streamContent);
 
             $streamProcess(
                 $partial,
@@ -263,11 +272,14 @@ class ClaudeChatResource implements ChatResourceInterface, HasDriverInterface, H
     }
 
     /**
-     * Handle the stream buffer process.
+     * Handle buffered streaming process with custom buffer logic.
+     *
+     * @param string $chunk The text chunk received
+     * @param string $streamContent The current accumulated content
      */
     protected function handleStreamBufferProcess(
         string $chunk,
-        ?string $streamContent
+        string $streamContent
     ): void {
         $streamBufferProcess = $this->streamBufferProcess;
 
@@ -293,105 +305,113 @@ class ClaudeChatResource implements ChatResourceInterface, HasDriverInterface, H
 
     /**
      * Process stream tool use.
+     *
+     * @param CreateStreamedResponse $response
+     *   The streamed response object
+     * @param array $toolUseBlocks
+     *   The current tool use blocks
+     *
+     * @return array
+     *   The updated tool use blocks
      */
     protected function processStreamToolUse(
-        CreateStreamedResponseDelta $response,
+        CreateStreamedResponse $response,
         array $toolUseBlocks
     ): array {
-        // Handle tool use streaming for Claude API
-        // Implementation will depend on the specific streaming format
+        $blockIndex = $response->index ?? 0;
+
+        if (
+            $response->type === 'content_block_start'
+            && isset($response->content_block_start)
+        ) {
+            $contentBlock = $response->content_block_start;
+
+            if ($contentBlock->type === 'tool_use') {
+                $toolUseBlocks[$blockIndex] = [
+                    'type' => 'tool_use',
+                    'id' => $contentBlock->id ?? null,
+                    'name' => $contentBlock->name ?? null,
+                    'input' => '',
+                ];
+            }
+        }
+        $delta = $response->delta;
+
+        if (
+            $response->type === 'content_block_delta'
+            && $delta->type === 'input_json_delta'
+            && $delta->partial_json
+        ) {
+            $toolUseBlocks[$blockIndex]['input'] .= $delta->partial_json;
+        }
+
         return $toolUseBlocks;
     }
 
     /**
-     * Check if response contains tool use.
+     * Check if the response contains tool use requests.
+     *
+     * @param CreateResponse $response The API response
+     *
+     * @return bool True if the response contains tool calls
      */
     protected function hasToolUse(CreateResponse $response): bool
     {
-        return ! empty($response->content) &&
-            collect($response->content)->contains(fn ($content) => $content->type === 'tool_use');
+        return ! empty($response->content) && collect($response->content)
+            ->contains(fn ($content) => $content->type === 'tool_use');
     }
 
     /**
-     * Handle tool use in the response.
+     * Handle tool calls by executing them and creating follow-up messages.
+     *
+     * @param CreateResponseContent[] $toolCalls Array of tool call objects
+     *
+     * @return CreateResponse|StreamResponse The response after tool execution
      */
-    protected function handleToolUse(CreateResponse $response): ?ChatbotHubResponseMessage
-    {
-        $toolUseBlocks = collect($response->content)
-            ->filter(fn ($content) => $content->type === 'tool_use')
-            ->map(fn ($content) => $content->toArray())
-            ->toArray();
-
-        return $this->executeToolCalls($toolUseBlocks);
-    }
-
-    /**
-     * Execute tool calls and get response.
-     */
-    protected function executeToolCalls(array $toolUseBlocks): ?ChatbotHubResponseMessage
-    {
-        if (empty($this->tools)) {
-            return null;
-        }
-
+    protected function handleToolCall(
+        array $toolCalls
+    ): CreateResponse|StreamResponse {
         $parameters = $this->resourceParameters();
 
-        // Add the assistant's tool use to the conversation
-        $parameters['messages'][] = [
-            'role' => ChatbotRoles::ASSISTANT->value,
-            'content' => array_merge(
-                $this->getTextContent($parameters['messages']),
-                $toolUseBlocks
-            ),
-        ];
+        $parameters['system'] = 'Response based on the tool results.';
 
-        // Execute each tool and add results
-        foreach ($toolUseBlocks as $toolUse) {
-            $result = $this->invokeTool($toolUse);
+        foreach ($toolCalls as $toolResponse) {
+            $parameters['messages'][] = [
+                'role' => ChatbotRoles::ASSISTANT->value,
+                'content' => [
+                    $toolResponse->toArray(),
+                ],
+            ];
+            $toolResult = $this->invokeTool($toolResponse);
 
             $parameters['messages'][] = [
                 'role' => ChatbotRoles::USER->value,
                 'content' => [
                     [
                         'type' => 'tool_result',
-                        'tool_use_id' => $toolUse['id'],
-                        'content' => $result,
+                        'tool_use_id' => $toolResponse->id,
+                        'content' => $toolResult,
                     ],
                 ],
             ];
         }
 
-        // Make another request with tool results
-        $response = $this->createResourceResponse($parameters);
-
-        return $this->handleResponse($response);
+        return $this->createResourceResponse($parameters);
     }
 
     /**
-     * Get text content from last message.
+     * Execute a specific tool call and return its result.
+     *
+     * @param CreateResponseContent $content The tool call content
+     *
+     * @return string|null The tool execution result
      */
-    protected function getTextContent(array $messages): array
+    protected function invokeTool(CreateResponseContent $content): ?string
     {
-        $lastMessage = end($messages);
-
-        if (isset($lastMessage['content']) && is_array($lastMessage['content'])) {
-            return collect($lastMessage['content'])
-                ->where('type', 'text')
-                ->toArray();
-        }
-
-        return [];
-    }
-
-    /**
-     * Invoke a tool call.
-     */
-    protected function invokeTool(array $toolUse): ?string
-    {
-        $tool = $this->tools->firstWhere('name', $toolUse['name']);
+        $tool = $this->tools->firstWhere('name', $content->name);
 
         if ($tool instanceof Tool) {
-            $arguments = $toolUse['input'] ?? [];
+            $arguments = $content->input ?? [];
 
             return call_user_func_array($tool, $arguments);
         }
@@ -400,115 +420,116 @@ class ClaudeChatResource implements ChatResourceInterface, HasDriverInterface, H
     }
 
     /**
-     * Handle different types of exceptions from the Claude API
+     * Build the parameter array for Claude API requests.
+     *
+     * @return array The API request parameters
      */
-    protected function handleException(\Throwable $exception): ?ChatbotHubResponseMessage
+    protected function resourceParameters(): array
     {
+        $messages = $this->resolveMessages();
+
+        if (empty($messages)) {
+            Log::warning('Claude API: No messages provided for request');
+
+            return [];
+        }
+        [$userMessages, $systemMessage] = $this->parseMessages($messages);
+
+        $parameters = [
+            'model' => $this->model,
+            'stream' => $this->stream,
+            'system' => $systemMessage,
+            'messages' => $userMessages,
+            'max_tokens' => 4096,
+        ];
+
+        if ($tools = $this->resolveTools()) {
+            $parameters['tools'] = $tools;
+        }
+
+        return array_filter($parameters);
+    }
+
+    /**
+     * Parse messages array into user messages and system message.
+     *
+     * @param array $messages Array of message objects
+     *
+     * @return array Array containing [userMessages, systemMessage]
+     */
+    protected function parseMessages(array $messages): array
+    {
+        $userMessages = [];
+        $systemMessage = null;
+
+        foreach ($messages as $message) {
+            if ($message['role'] === ChatbotRoles::SYSTEM->value) {
+                $systemMessage = $message['content'];
+            } else {
+                $userMessages[] = $message;
+            }
+        }
+
+        return [$userMessages, $systemMessage];
+    }
+
+    /**
+     * Handle different types of exceptions from the Claude API with
+     * appropriate logging.
+     *
+     * @param \Throwable $exception The exception to handle
+     *
+     * @return ChatbotHubResponseMessage|null Always returns null after logging
+     */
+    protected function handleException(
+        \Throwable $exception
+    ): ?ChatbotHubResponseMessage {
         $message = $exception->getMessage();
         $code = $exception->getCode();
 
+        $context = [
+            'code' => $code,
+            'exception_type' => get_class($exception),
+        ];
+
         // Handle rate limiting (429 status code)
         if ($code === 429 || str_contains($message, 'rate limit')) {
-            Log::warning('Claude API rate limit exceeded: '.$message);
+            Log::warning('Claude API rate limit exceeded', array_merge($context, ['message' => $message]));
 
             return null;
         }
 
         // Handle authentication errors (401 status code)
         if ($code === 401 || str_contains($message, 'unauthorized') || str_contains($message, 'invalid api key')) {
-            Log::error('Claude API authentication error: '.$message);
+            Log::error('Claude API authentication error', array_merge($context, ['message' => $message]));
 
             return null;
         }
 
         // Handle quota/billing errors (403 status code)
         if ($code === 403 || str_contains($message, 'quota') || str_contains($message, 'billing')) {
-            Log::error('Claude API quota/billing error: '.$message);
+            Log::error('Claude API quota/billing error', array_merge($context, ['message' => $message]));
 
             return null;
         }
 
         // Handle server errors (500+ status codes)
         if ($code >= 500) {
-            Log::error('Claude API server error: '.$message);
+            Log::error('Claude API server error', array_merge($context, ['message' => $message]));
 
             return null;
         }
 
         // Handle validation errors (400 status code)
         if ($code === 400 || str_contains($message, 'validation') || str_contains($message, 'invalid')) {
-            Log::error('Claude API validation error: '.$message);
+            Log::error('Claude API validation error', array_merge($context, ['message' => $message]));
 
             return null;
         }
 
         // Log any other unexpected errors
-        Log::error('Claude API unexpected error: '.$message, [
-            'code' => $code,
-            'exception' => get_class($exception),
-        ]);
+        Log::error('Claude API unexpected error', array_merge($context, ['message' => $message]));
 
         return null;
-    }
-
-    /**
-     * Process the Claude API response
-     */
-    protected function processResponse(CreateResponse $response): ?ChatbotHubResponseMessage
-    {
-        $content = $response->content[0]->text ?? null;
-
-        if ($content === null) {
-            return null;
-        }
-
-        return ChatbotHubResponseMessage::fromString($content);
-    }
-
-    /**
-     * Define the Claude resource parameters
-     */
-    protected function resourceParameters(): array
-    {
-        $messages = $this->resolveMessages();
-
-        // Validate that we have messages to send
-        if (empty($messages)) {
-            Log::warning('Claude API: No messages provided for request');
-
-            return [];
-        }
-
-        // Claude requires system messages to be separate from the messages array
-        $systemMessage = null;
-        $userAssistantMessages = [];
-
-        foreach ($messages as $message) {
-            if ($message['role'] === ChatbotRoles::SYSTEM->value) {
-                $systemMessage = $message['content'];
-            } else {
-                $userAssistantMessages[] = $message;
-            }
-        }
-
-        $parameters = [
-            'model' => $this->model,
-            'messages' => $userAssistantMessages,
-            'max_tokens' => 4096, // Claude requires max_tokens parameter
-        ];
-
-        if ($systemMessage !== null) {
-            $parameters['system'] = $systemMessage;
-        }
-
-        if (! empty($this->resolveTools())) {
-            $parameters['tools'] = $this->resolveTools();
-        }
-
-        if ($this->stream) {
-            $parameters['stream'] = true;
-        }
-
-        return array_filter($parameters);
     }
 }

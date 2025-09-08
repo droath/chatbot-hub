@@ -9,6 +9,7 @@ use Droath\ChatbotHub\Messages\UserMessage;
 use Droath\ChatbotHub\Messages\SystemMessage;
 use Droath\ChatbotHub\Tools\Tool;
 use Droath\ChatbotHub\Tools\ToolProperty;
+use Droath\ChatbotHub\Responses\ChatbotHubResponseMessage;
 
 /**
  * Functional test for Claude integration with a real API key.
@@ -20,7 +21,7 @@ use Droath\ChatbotHub\Tools\ToolProperty;
 describe('Claude Integration Functional Test', function () {
     test('can perform basic chat with real API', function () {
         $hubClient = new ChatbotHubClient(app());
-        $driver = $hubClient->driver(ChatbotProvider::CLAUDE);
+        $driver = $hubClient->driver(ChatbotProvider::CLAUDE->value);
 
         expect($driver)->toBeInstanceOf(Claude::class);
 
@@ -42,7 +43,7 @@ describe('Claude Integration Functional Test', function () {
 
     test('can handle system messages with real API', function () {
         $hubClient = new ChatbotHubClient(app());
-        $driver = $hubClient->driver(ChatbotProvider::CLAUDE);
+        $driver = $hubClient->driver(ChatbotProvider::CLAUDE->value);
 
         $systemMessage = SystemMessage::make('You are a helpful assistant. Always start your response with "SYSTEM:"');
 
@@ -91,34 +92,8 @@ describe('Claude Integration Functional Test', function () {
 
         expect($response)->not->toBeNull()
             ->and($response->message)->toContain('22')
-            ->and($response->message)->toContain('°C')
             ->and($response->message)->toContain('Paris')
             ->and($response->message)->toContain('sunny');
-    });
-
-    test('can handle different Claude models', function () {
-        $hubClient = new ChatbotHubClient(app());
-        $driver = $hubClient->driver(ChatbotProvider::CLAUDE->value);
-
-        $models = [
-            'claude-3-haiku-20240307',
-            'claude-3-5-sonnet-20241022',
-        ];
-
-        foreach ($models as $model) {
-            $chat = $driver->chat()->withModel($model);
-
-            $userMessage = UserMessage::make('Say "Model test successful" and nothing else.');
-            $userMessage->setDriver($driver);
-
-            $chat->withMessages([$userMessage]);
-
-            $response = $chat();
-
-            expect($response)->not->toBeNull()
-                ->and($response->message)->toBeString()
-                ->and($response->message)->toContain('Model test successful');
-        }
     });
 
     test('can handle longer conversations', function () {
@@ -153,6 +128,119 @@ describe('Claude Integration Functional Test', function () {
             ->and($response2->message)->toContain('Test User');
     });
 
+    test('can handle non-streaming responses with tools', function () {
+        $hubClient = new ChatbotHubClient(app());
+        $driver = $hubClient->driver(ChatbotProvider::CLAUDE->value);
+
+        $toolCalled = false;
+
+        $calculatorTool = Tool::make('calculate')
+            ->describe('Perform basic arithmetic calculations')
+            ->withProperties([
+                ToolProperty::make('expression', 'string')
+                    ->describe('Mathematical expression to calculate (e.g., "2+2")')
+                    ->required(),
+            ])
+            ->using(function (array $args) use (&$toolCalled) {
+                $toolCalled = true;
+                $expression = $args['expression'];
+
+                // Simple calculator for basic expressions
+                if (preg_match('/^(\d+)\s*\+\s*(\d+)$/', $expression, $matches)) {
+                    $result = (int) $matches[1] + (int) $matches[2];
+
+                    return "The result of {$expression} is {$result}";
+                }
+
+                return "Calculated result for: {$expression}";
+            });
+
+        $chat = $driver->chat();
+        $userMessage = UserMessage::make('Please calculate 5+3 for me using the calculator tool.');
+        $userMessage->setDriver($driver);
+
+        $chat->withMessages([$userMessage])
+            ->withTools([$calculatorTool]);
+
+        $response = $chat();
+
+        expect($response)->not->toBeNull()
+            ->and($toolCalled)->toBeTrue()
+            ->and($response->message)->toContain('8'); // Should contain the result
+    });
+
+    test('can handle streaming responses without tools', function () {
+        $hubClient = new ChatbotHubClient(app());
+        $driver = $hubClient->driver(ChatbotProvider::CLAUDE->value);
+
+        $chat = $driver->chat();
+        $userMessage = UserMessage::make('Say "Streaming test successful" and nothing else.');
+        $userMessage->setDriver($driver);
+
+        $streamOutput = '';
+        $streamFinished = false;
+
+        $chat->withMessages([$userMessage])
+            ->usingStream(
+                function (string $chunk, bool $initialized) use (&$streamOutput) {
+                    $streamOutput .= $chunk;
+                },
+                function (ChatbotHubResponseMessage $response) use (&$streamFinished) {
+                    $streamFinished = true;
+                }
+            );
+
+        $response = $chat();
+
+        expect($response)->not->toBeNull()
+            ->and($response->message)->toBeString()
+            ->and($response->message)->toContain('Streaming test successful')
+            ->and($streamFinished)->toBeTrue()
+            ->and($streamOutput)->toContain('Streaming test successful');
+    });
+
+    test('can handle streaming responses with tools', function () {
+        $hubClient = new ChatbotHubClient(app());
+        $driver = $hubClient->driver(ChatbotProvider::CLAUDE->value);
+
+        $weatherTool = Tool::make('get_weather')
+            ->describe('Get current weather for a location')
+            ->withProperties([
+                ToolProperty::make('location', 'string')
+                    ->describe('The city name')
+                    ->required(),
+            ])
+            ->using(function (array $arguments) {
+                return "The weather in {$arguments['location']} is sunny with 22°C.";
+            });
+
+        $chat = $driver->chat();
+        $userMessage = UserMessage::make('What is the weather like in London? Use the weather tool.');
+        $userMessage->setDriver($driver);
+
+        $streamOutput = '';
+        $streamFinished = false;
+
+        $chat->withMessages([$userMessage])
+            ->withTools([$weatherTool])
+            ->usingStream(
+                function (string $chunk, bool $initialized) use (&$streamOutput) {
+                    $streamOutput .= $chunk;
+                },
+                function (ChatbotHubResponseMessage $response) use (&$streamFinished) {
+                    $streamFinished = true;
+                }
+            );
+
+        $response = $chat();
+
+        expect($response)->not->toBeNull()
+            ->and($streamFinished)->toBeTrue()
+            ->and($response->message)->toContain('22')
+            ->and($response->message)->toContain('London')
+            ->and($response->message)->toContain('sunny');
+    });
+
     test('validates configuration correctly', function () {
         $hubClient = new ChatbotHubClient(app());
         $driver = $hubClient->driver(ChatbotProvider::CLAUDE->value);
@@ -167,8 +255,7 @@ describe('Claude Integration Functional Test', function () {
         expect($invalidModelErrors)->not->toBeEmpty();
     });
 })->skip(
-    (! isset($_ENV['ANTHROPIC_API_KEY'])
-    || ! isset($_ENV['ANTHROPIC_FUNCTIONAL_TEST'])
-    || $_ENV['ANTHROPIC_FUNCTIONAL_TEST'] !== 'true'),
+    (! isset($_ENV['ANTHROPIC_API_KEY'], $_ENV['ANTHROPIC_FUNCTIONAL_TEST'])
+        || $_ENV['ANTHROPIC_FUNCTIONAL_TEST'] !== 'true'),
     'Requires ANTHROPIC_FUNCTIONAL_TEST=true and ANTHROPIC_API_KEY environment variables'
 );

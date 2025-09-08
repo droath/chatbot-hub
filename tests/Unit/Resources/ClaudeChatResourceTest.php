@@ -11,7 +11,6 @@ use Droath\ChatbotHub\Resources\Contracts\HasDriverInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasMessagesInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasResponseFormatInterface;
 use Droath\ChatbotHub\Resources\Contracts\HasToolsInterface;
-use Droath\ChatbotHub\Resources\Contracts\HasToolTransformerInterface;
 use Droath\ChatbotHub\Drivers\Contracts\HasStreamingInterface;
 use Droath\ChatbotHub\Messages\UserMessage;
 use Droath\ChatbotHub\Tools\Tool;
@@ -37,8 +36,7 @@ describe('ClaudeChatResource', function () {
             ->and($resource)->toBeInstanceOf(HasResponseFormatInterface::class)
             ->and($resource)->toBeInstanceOf(HasDriverInterface::class)
             ->and($resource)->toBeInstanceOf(HasStreamingInterface::class)
-            ->and($resource)->toBeInstanceOf(HasToolsInterface::class)
-            ->and($resource)->toBeInstanceOf(HasToolTransformerInterface::class);
+            ->and($resource)->toBeInstanceOf(HasToolsInterface::class);
     });
 
     test('has correct default model', function () {
@@ -69,21 +67,6 @@ describe('ClaudeChatResource', function () {
             ->and($resource->driver())->toBe($driver);
     });
 
-    test('supports all Claude models', function (string $model) {
-        $client = new ClientFake();
-        $driver = new Claude($client);
-        $resource = new ClaudeChatResource($client, $driver);
-
-        expect(ClaudeChatResource::isModelSupported($model))->toBeTrue();
-    })->with([
-        'claude-3-5-sonnet-20241022',
-        'claude-3-5-sonnet-20240620',
-        'claude-3-5-haiku-20241022',
-        'claude-3-opus-20240229',
-        'claude-3-sonnet-20240229',
-        'claude-3-haiku-20240307',
-    ]);
-
     test('can handle tools', function () {
         $client = new ClientFake();
         $driver = new Claude($client);
@@ -111,7 +94,7 @@ describe('ClaudeChatResource', function () {
                     ->required(),
             ]);
 
-        $transformed = ClaudeChatResource::transformTool($tool);
+        $transformed = Claude::transformTool($tool);
 
         expect($transformed)->toHaveKey('name')
             ->and($transformed['name'])->toBe('test_tool')

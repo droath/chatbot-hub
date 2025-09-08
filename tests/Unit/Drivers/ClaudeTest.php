@@ -28,7 +28,7 @@ describe('Claude Driver', function () {
     });
 
     test('has correct default model', function () {
-        expect(Claude::DEFAULT_MODEL)->toBe('claude-3-5-sonnet-20241022');
+        expect(Claude::DEFAULT_MODEL)->toBe('claude-3-haiku-20240307');
     });
 
     it('accepts anthropic client in constructor', function () {
