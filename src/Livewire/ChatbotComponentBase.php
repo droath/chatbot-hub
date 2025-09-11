@@ -160,7 +160,8 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
         if ($this->parent instanceof Model) {
             ChatbotMessages::updateOrCreate(
                 [
-                    'user_id' => auth()->id(),
+                    'owner_id' => auth()->id(),
+                    'owner_type' => auth()->user()->getMorphClass(),
                     'parent_id' => $this->parent->getKey(),
                     'parent_type' => $this->parent->getMorphClass(),
                 ],
@@ -203,7 +204,8 @@ abstract class ChatbotComponentBase extends Component implements ChatbotComponen
             return null;
         }
 
-        return ChatbotMessages::where('user_id', auth()->id())
+        return ChatbotMessages::where('owner_id', auth()->id())
+            ->where('owner_type', auth()->user()->getMorphClass())
             ->where('parent_id', $this->parent->getKey())
             ->where('parent_type', $this->parent->getMorphClass());
     }

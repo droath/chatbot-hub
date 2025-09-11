@@ -52,9 +52,10 @@ class NullMemoryStrategy implements MemoryStrategyInterface
     }
 
 
-    public function cleanupExpired(): int
+    public function cleanupExpired(): ?bool
     {
         // No-op implementation, nothing to cleanup
-        return 0;
+        // Return true to indicate cleanup was successful (no-op)
+        return true;
     }
 }

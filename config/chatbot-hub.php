@@ -106,5 +106,53 @@ return [
             */
             'null' => [],
         ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Memory Cleanup Configuration
+        |--------------------------------------------------------------------------
+        |
+        | Configure automatic cleanup of expired memory entries. The cleanup
+        | service will iterate through specified strategies and remove expired
+        | entries to maintain performance and prevent storage bloat.
+        |
+        | To enable automatic scheduling, add the scheduler code to your
+        | routes/console.php file. See SCHEDULER.md for complete setup instructions.
+        |
+        */
+        'cleanup' => [
+            /*
+            |--------------------------------------------------------------------------
+            | Cleanup Strategies
+            |--------------------------------------------------------------------------
+            |
+            | Specify which memory strategies should be included in automatic cleanup.
+            | Only strategies that support expiration (like database) need cleanup.
+            |
+            */
+            'strategies' => ['database'],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Cleanup Schedule
+            |--------------------------------------------------------------------------
+            |
+            | Configure when the cleanup should run. Uses Laravel scheduler syntax.
+            | Examples: 'hourly', 'daily', 'twiceDaily', 'weekly'
+            |
+            */
+            'schedule' => env('CHATBOT_MEMORY_CLEANUP_SCHEDULE', 'daily'),
+
+            /*
+            |--------------------------------------------------------------------------
+            | Cleanup Enabled
+            |--------------------------------------------------------------------------
+            |
+            | Enable or disable automatic memory cleanup. Set to false to disable
+            | the scheduled cleanup entirely.
+            |
+            */
+            'enabled' => env('CHATBOT_MEMORY_CLEANUP_ENABLED', true),
+        ],
     ],
 ];

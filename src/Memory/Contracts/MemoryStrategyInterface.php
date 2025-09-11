@@ -17,7 +17,8 @@ interface MemoryStrategyInterface extends AgentMemoryInterface
     /**
      * Cleanup expired entries (strategy-specific implementation).
      *
-     * @return int Number of entries cleaned up
+     * @return bool|null
+     *   Number of entries cleaned up
      */
-    public function cleanupExpired(): int;
+    public function cleanupExpired(): ?bool;
 }

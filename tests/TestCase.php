@@ -8,6 +8,18 @@ use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
 {
+    public function getEnvironmentSetUp($app)
+    {
+        config()->set('database.default', 'testing');
+        // Use array cache driver to avoid database cache table requirement
+        config()->set('cache.default', 'array');
+
+        /*
+        $migration = include __DIR__.'/../database/migrations/create_chatbot-hub_table.php.stub';
+        $migration->up();
+        */
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -15,6 +27,8 @@ class TestCase extends Orchestra
         Factory::guessFactoryNamesUsing(
             fn (string $modelName) => 'Droath\\ChatbotHub\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
+        // Load package migrations for testing
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
 
     protected function getPackageProviders($app)
@@ -22,15 +36,5 @@ class TestCase extends Orchestra
         return [
             ChatbotHubServiceProvider::class,
         ];
-    }
-
-    public function getEnvironmentSetUp($app)
-    {
-        config()->set('database.default', 'testing');
-
-        /*
-        $migration = include __DIR__.'/../database/migrations/create_chatbot-hub_table.php.stub';
-        $migration->up();
-        */
     }
 }

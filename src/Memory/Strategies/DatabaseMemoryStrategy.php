@@ -25,10 +25,6 @@ class DatabaseMemoryStrategy implements MemoryStrategyInterface
 {
     protected const string DEFAULT_TTL_KEY = 'default_ttl';
 
-    protected const string CONNECTION_KEY = 'connection';
-
-    protected const string TABLE_KEY = 'table';
-
     public function __construct(
         protected array $config = []
     ) {}
@@ -51,7 +47,7 @@ class DatabaseMemoryStrategy implements MemoryStrategyInterface
             );
 
             return true;
-        } catch (QueryException $e) {
+        } catch (QueryException) {
             // Log error in production, fail gracefully
             return false;
         }
@@ -64,12 +60,8 @@ class DatabaseMemoryStrategy implements MemoryStrategyInterface
                 ->where('expires_at', '>', Carbon::now())
                 ->first();
 
-            if (! $record) {
-                return $default;
-            }
-
-            return $record->value;
-        } catch (QueryException $e) {
+            return $record->value ?? $default;
+        } catch (QueryException) {
             // Log error in production, return default
             return $default;
         }
@@ -81,7 +73,7 @@ class DatabaseMemoryStrategy implements MemoryStrategyInterface
             return AgentMemory::where('key', $key)
                 ->where('expires_at', '>', Carbon::now())
                 ->exists();
-        } catch (QueryException $e) {
+        } catch (QueryException) {
             // Log error in production, assume false
             return false;
         }
@@ -93,7 +85,7 @@ class DatabaseMemoryStrategy implements MemoryStrategyInterface
             AgentMemory::where('key', $key)->delete();
 
             return true;
-        } catch (QueryException $e) {
+        } catch (QueryException) {
             // Log error in production, fail gracefully
             return false;
         }
@@ -105,7 +97,7 @@ class DatabaseMemoryStrategy implements MemoryStrategyInterface
             AgentMemory::truncate();
 
             return true;
-        } catch (QueryException $e) {
+        } catch (QueryException) {
             // Log error in production, fail gracefully
             return false;
         }
@@ -122,7 +114,7 @@ class DatabaseMemoryStrategy implements MemoryStrategyInterface
             }
 
             return true;
-        } catch (QueryException $e) {
+        } catch (QueryException) {
             // Log error in production, fail gracefully
             return false;
         }
@@ -137,30 +129,24 @@ class DatabaseMemoryStrategy implements MemoryStrategyInterface
             AgentMemory::whereIn('key', $keys)->delete();
 
             return true;
-        } catch (QueryException $e) {
+        } catch (QueryException) {
             // Log error in production, fail gracefully
             return false;
         }
     }
 
     /**
-     * Clean up expired memory entries and return count of deleted records.
+     * Clean up expired memory entries and return success status.
      */
-    public function cleanupExpired(): int
+    public function cleanupExpired(): ?bool
     {
         try {
-            return AgentMemory::where('expires_at', '<=', Carbon::now())->delete();
-        } catch (QueryException $e) {
-            // Log error in production, return 0
-            return 0;
-        }
-    }
+            AgentMemory::where('expires_at', '<=', Carbon::now())->delete();
 
-    /**
-     * Get strategy configuration for internal use.
-     */
-    protected function getConfiguration(): array
-    {
-        return $this->config;
+            return true;
+        } catch (QueryException) {
+            // Log error in production, return false
+            return false;
+        }
     }
 }

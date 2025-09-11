@@ -115,10 +115,11 @@ class SessionMemoryStrategy implements MemoryStrategyInterface
         }
     }
 
-    public function cleanupExpired(): int
+    public function cleanupExpired(): ?bool
     {
         // Session strategy doesn't need manual cleanup as Laravel handles session expiration
-        return 0;
+        // Return true to indicate cleanup was successful (no-op for sessions)
+        return true;
     }
 
     public function setSession(Store $session): static

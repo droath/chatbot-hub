@@ -240,9 +240,9 @@ describe('SessionMemoryStrategy', function () {
     });
 
     describe('strategy-specific methods', function () {
-        test('cleanupExpired returns 0 as session handles expiration', function () {
-            // Session strategy doesn't need manual cleanup
-            expect($this->strategy->cleanupExpired())->toBe(0);
+        test('cleanupExpired returns true as session handles expiration', function () {
+            // Session strategy doesn't need manual cleanup, returns true to indicate success
+            expect($this->strategy->cleanupExpired())->toBeTrue();
         });
     });
 

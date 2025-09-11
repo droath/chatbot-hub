@@ -3,6 +3,9 @@
 namespace Droath\ChatbotHub;
 
 use Droath\ChatbotHub\Plugins\AgentWorkerPluginManager;
+use Droath\ChatbotHub\Services\MemoryManager;
+use Droath\ChatbotHub\Services\MemoryCleanupService;
+use Droath\ChatbotHub\Console\Commands\MemoryCleanupCommand;
 use Livewire\LivewireServiceProvider;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -21,7 +24,8 @@ class ChatbotHubServiceProvider extends PackageServiceProvider
             ->hasViews()
             ->hasConfigFile()
             ->hasTranslations()
-            ->hasMigrations(['create_chatbot_messages']);
+            ->discoversMigrations()
+            ->hasCommand(MemoryCleanupCommand::class);
     }
 
     public function packageRegistered(): void
@@ -34,6 +38,14 @@ class ChatbotHubServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(AgentWorkerPluginManager::class, function () {
             return new AgentWorkerPluginManager();
+        });
+
+        $this->app->singleton(MemoryManager::class, function () {
+            return new MemoryManager();
+        });
+
+        $this->app->singleton(MemoryCleanupService::class, function () {
+            return new MemoryCleanupService();
         });
     }
 
