@@ -5,69 +5,131 @@ declare(strict_types=1);
 namespace Droath\ChatbotHub\Memory\Strategies;
 
 use Droath\ChatbotHub\Memory\Contracts\MemoryStrategyInterface;
+use Droath\ChatbotHub\Memory\Exceptions\MemoryStorageException;
+use Illuminate\Session\Store;
+use Illuminate\Contracts\Session\Session;
+use Throwable;
 
 /**
- * Placeholder implementation for SessionMemoryStrategy.
- * 
- * This is a minimal implementation to satisfy interface contracts and tests.
- * Full implementation will be completed in Task 2.
+ * Session-based memory strategy for agent data storage.
+ *
+ * This strategy uses Laravel's session system to store agent memory
+ * data temporarily for the duration of a user session. TTL parameters
+ * are ignored as session data expires with the session itself.
  */
 class SessionMemoryStrategy implements MemoryStrategyInterface
 {
-    protected array $config;
+    private const string PREFIX_KEY = 'prefix';
 
-    public function __construct(array $config = [])
-    {
-        $this->config = $config;
+    private const string DEFAULT_PREFIX = 'agent_memory';
+
+    protected string $prefix;
+
+    protected Session $session;
+
+    public function __construct(
+        protected array $config
+    ) {
+        $this->session = app(Session::class);
+        $this->prefix = $this->config[self::PREFIX_KEY] ?? self::DEFAULT_PREFIX;
     }
 
     public function set(string $key, mixed $value, ?int $ttl = null): bool
     {
-        // Placeholder implementation
-        return true;
+        try {
+            $sessionKey = $this->buildSessionKey($key);
+            $this->session->put($sessionKey, $value);
+
+            return true;
+        } catch (Throwable $exception) {
+            throw new MemoryStorageException(
+                "Failed to store memory key '{$key}' in session: {$exception->getMessage()}",
+                0,
+                $exception
+            );
+        }
     }
 
     public function get(string $key, mixed $default = null): mixed
     {
-        // Placeholder implementation
-        return $default;
+        try {
+            $sessionKey = $this->buildSessionKey($key);
+
+            return $this->session->get($sessionKey, $default);
+        } catch (Throwable $exception) {
+            throw new MemoryStorageException(
+                "Failed to retrieve memory key '{$key}' from session: {$exception->getMessage()}",
+                0,
+                $exception
+            );
+        }
     }
 
     public function has(string $key): bool
     {
-        // Placeholder implementation
-        return false;
+        try {
+            $sessionKey = $this->buildSessionKey($key);
+
+            return $this->session->has($sessionKey);
+        } catch (Throwable $exception) {
+            throw new MemoryStorageException(
+                "Failed to check memory key '{$key}' in session: {$exception->getMessage()}",
+                0,
+                $exception
+            );
+        }
     }
 
     public function forget(string $key): bool
     {
-        // Placeholder implementation
-        return true;
+        try {
+            $sessionKey = $this->buildSessionKey($key);
+            $this->session->forget($sessionKey);
+
+            return true;
+        } catch (Throwable $exception) {
+            throw new MemoryStorageException(
+                "Failed to forget memory key '{$key}' from session: {$exception->getMessage()}",
+                0,
+                $exception
+            );
+        }
     }
 
     public function flush(): bool
     {
-        // Placeholder implementation
-        return true;
-    }
+        try {
+            foreach ($this->session->all() as $sessionKey => $value) {
+                if (str_starts_with($sessionKey, $this->prefix)) {
+                    $this->session->forget($sessionKey);
+                }
+            }
 
-    public function getStrategyName(): string
-    {
-        return 'session';
-    }
-
-    public function isHealthy(): bool
-    {
-        return true;
-    }
-
-    public function getConfiguration(): array
-    {
-        return $this->config;
+            return true;
+        } catch (Throwable $exception) {
+            throw new MemoryStorageException(
+                "Failed to flush memory from session: {$exception->getMessage()}",
+                0,
+                $exception
+            );
+        }
     }
 
     public function cleanupExpired(): int
     {
+        // Session strategy doesn't need manual cleanup as Laravel handles session expiration
         return 0;
+    }
+
+    public function setSession(Store $session): static
+    {
+        $this->session = $session;
+
+        return $this;
+    }
+
+    private function buildSessionKey(string $key): string
+    {
+        return "$this->prefix.$key";
     }
 }

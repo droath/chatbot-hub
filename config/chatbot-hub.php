@@ -78,7 +78,6 @@ return [
             |
             */
             'session' => [
-                'enabled' => (bool) env('CHATBOT_MEMORY_SESSION_ENABLED', true),
                 'prefix' => env('CHATBOT_MEMORY_SESSION_PREFIX', 'agent_memory'),
             ],
 
@@ -92,10 +91,8 @@ return [
             |
             */
             'database' => [
-                'enabled' => (bool) env('CHATBOT_MEMORY_DATABASE_ENABLED', true),
-                'connection' => env('CHATBOT_MEMORY_DATABASE_CONNECTION', null),
                 'table' => env('CHATBOT_MEMORY_DATABASE_TABLE', 'agent_memory'),
-                'cleanup_probability' => (int) env('CHATBOT_MEMORY_DATABASE_CLEANUP_PROBABILITY', 100),
+                'connection' => env('CHATBOT_MEMORY_DATABASE_CONNECTION'),
             ],
 
             /*
@@ -107,9 +104,7 @@ return [
             | All operations succeed but no data is actually stored or retrieved.
             |
             */
-            'null' => [
-                'enabled' => (bool) env('CHATBOT_MEMORY_NULL_ENABLED', false),
-            ],
+            'null' => [],
         ],
     ],
 ];

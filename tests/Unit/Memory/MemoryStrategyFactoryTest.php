@@ -3,99 +3,233 @@
 declare(strict_types=1);
 
 use Droath\ChatbotHub\Memory\MemoryStrategyFactory;
-use Droath\ChatbotHub\Memory\Configuration\MemoryConfiguration;
+use Droath\ChatbotHub\Memory\MemoryDefinition;
 use Droath\ChatbotHub\Memory\Contracts\MemoryStrategyInterface;
+use Droath\ChatbotHub\Memory\Strategies\SessionMemoryStrategy;
+use Droath\ChatbotHub\Memory\Strategies\DatabaseMemoryStrategy;
+use Droath\ChatbotHub\Memory\Strategies\NullMemoryStrategy;
 
 describe('MemoryStrategyFactory', function () {
-    beforeEach(function () {
-        $this->config = new MemoryConfiguration([
-            'default' => 'session',
-            'strategies' => [
-                'session' => ['enabled' => true],
-                'database' => ['enabled' => true],
-                'null' => ['enabled' => false],
-            ]
-        ]);
-        
-        $this->factory = new MemoryStrategyFactory($this->config);
+    describe('constructor and basic functionality', function () {
+        test('can be instantiated with MemoryDefinition', function () {
+            $definition = new MemoryDefinition('session');
+            $factory = new MemoryStrategyFactory($definition);
+
+            expect($factory)->toBeInstanceOf(MemoryStrategyFactory::class);
+        });
+
+        test('accepts MemoryDefinition with configs', function () {
+            $definition = new MemoryDefinition('session', ['prefix' => 'test']);
+            $factory = new MemoryStrategyFactory($definition);
+
+            expect($factory)->toBeInstanceOf(MemoryStrategyFactory::class);
+        });
     });
 
-    test('can be instantiated', function () {
-        expect($this->factory)->toBeInstanceOf(MemoryStrategyFactory::class);
+    describe('createInstance method', function () {
+        test('creates SessionMemoryStrategy for session type', function () {
+            $definition = new MemoryDefinition('session', ['prefix' => 'test_session']);
+            $factory = new MemoryStrategyFactory($definition);
+
+            $strategy = $factory->createInstance();
+
+            expect($strategy)->toBeInstanceOf(SessionMemoryStrategy::class)
+                ->and($strategy)->toBeInstanceOf(MemoryStrategyInterface::class);
+        });
+
+        test('creates DatabaseMemoryStrategy for database type', function () {
+            $definition = new MemoryDefinition('database', ['table' => 'agent_memory']);
+            $factory = new MemoryStrategyFactory($definition);
+
+            $strategy = $factory->createInstance();
+
+            expect($strategy)->toBeInstanceOf(DatabaseMemoryStrategy::class)
+                ->and($strategy)->toBeInstanceOf(MemoryStrategyInterface::class);
+        });
+
+        test('creates NullMemoryStrategy for null type', function () {
+            $definition = new MemoryDefinition('null');
+            $factory = new MemoryStrategyFactory($definition);
+
+            $strategy = $factory->createInstance();
+
+            expect($strategy)->toBeInstanceOf(NullMemoryStrategy::class)
+                ->and($strategy)->toBeInstanceOf(MemoryStrategyInterface::class);
+        });
+
+        test('passes configuration to strategy instances', function () {
+            $configs = ['prefix' => 'custom_prefix', 'ttl' => 7200];
+            $definition = new MemoryDefinition('session', $configs);
+            $factory = new MemoryStrategyFactory($definition);
+
+            $strategy = $factory->createInstance();
+
+            expect($strategy)->toBeInstanceOf(SessionMemoryStrategy::class);
+        });
+
+        test('creates instances with empty configs', function () {
+            $definition = new MemoryDefinition('null');
+            $factory = new MemoryStrategyFactory($definition);
+
+            $strategy = $factory->createInstance();
+
+            expect($strategy)->toBeInstanceOf(NullMemoryStrategy::class);
+        });
     });
 
-    test('createDefault returns default strategy', function () {
-        $strategy = $this->factory->createDefault();
-        
-        expect($strategy)->toBeInstanceOf(MemoryStrategyInterface::class);
-        // We'll mock strategies in implementation tests since they don't exist yet
+    describe('error handling', function () {
+        test('throws exception for unknown strategy type', function () {
+            // We need to create an invalid definition by bypassing validation
+            $reflection = new ReflectionClass(MemoryDefinition::class);
+            $typeProperty = $reflection->getProperty('type');
+            $typeProperty->setAccessible(true);
+
+            $definition = $reflection->newInstanceWithoutConstructor();
+            $typeProperty->setValue($definition, 'unknown_strategy');
+
+            $factory = new MemoryStrategyFactory($definition);
+
+            expect(fn () => $factory->createInstance())
+                ->toThrow(InvalidArgumentException::class, 'Unknown memory strategy: unknown_strategy');
+        });
     });
 
-    test('getAvailableStrategies returns only enabled strategies', function () {
-        $strategies = $this->factory->getAvailableStrategies();
-        
-        expect($strategies)->toContain('session')
-            ->and($strategies)->toContain('database')
-            ->and($strategies)->not->toContain('null') // Disabled
-            ->and($strategies)->toHaveCount(2);
+    describe('strategy class mappings', function () {
+        test('has correct strategy class mappings', function () {
+            $reflection = new ReflectionClass(MemoryStrategyFactory::class);
+            $strategyClasses = $reflection->getConstant('STRATEGY_CLASSES');
+
+            expect($strategyClasses)->toBe([
+                'null' => NullMemoryStrategy::class,
+                'session' => SessionMemoryStrategy::class,
+                'database' => DatabaseMemoryStrategy::class,
+            ]);
+        });
+
+        test('all mapped classes implement MemoryStrategyInterface', function () {
+            $reflection = new ReflectionClass(MemoryStrategyFactory::class);
+            $strategyClasses = $reflection->getConstant('STRATEGY_CLASSES');
+
+            foreach ($strategyClasses as $type => $className) {
+                $classReflection = new ReflectionClass($className);
+                expect($classReflection->implementsInterface(MemoryStrategyInterface::class))
+                    ->toBeTrue("$className should implement MemoryStrategyInterface");
+            }
+        });
+
+        test('creates different instances for each type', function () {
+            $types = ['session', 'database', 'null'];
+            $instances = [];
+
+            foreach ($types as $type) {
+                $definition = new MemoryDefinition($type);
+                $factory = new MemoryStrategyFactory($definition);
+                $instances[$type] = $factory->createInstance();
+            }
+
+            expect($instances['session'])->toBeInstanceOf(SessionMemoryStrategy::class)
+                ->and($instances['database'])->toBeInstanceOf(DatabaseMemoryStrategy::class)
+                ->and($instances['null'])->toBeInstanceOf(NullMemoryStrategy::class);
+
+            // Ensure they are different instances
+            expect($instances['session'])->not->toBe($instances['database'])
+                ->and($instances['database'])->not->toBe($instances['null'])
+                ->and($instances['session'])->not->toBe($instances['null']);
+        });
     });
 
-    test('hasStrategy checks availability correctly', function () {
-        expect($this->factory->hasStrategy('session'))->toBeTrue()
-            ->and($this->factory->hasStrategy('database'))->toBeTrue()
-            ->and($this->factory->hasStrategy('null'))->toBeFalse() // Disabled
-            ->and($this->factory->hasStrategy('invalid'))->toBeFalse(); // Invalid
+    describe('integration with different strategy configurations', function () {
+        test('creates session strategy with custom configuration', function () {
+            $configs = [
+                'prefix' => 'custom_agent_memory',
+                'enabled' => true
+            ];
+            $definition = new MemoryDefinition('session', $configs);
+            $factory = new MemoryStrategyFactory($definition);
+
+            $strategy = $factory->createInstance();
+
+            expect($strategy)->toBeInstanceOf(SessionMemoryStrategy::class);
+        });
+
+        test('creates database strategy with custom configuration', function () {
+            $configs = [
+                'table' => 'custom_memory_table',
+                'connection' => 'mysql',
+                'cleanup_probability' => 50
+            ];
+            $definition = new MemoryDefinition('database', $configs);
+            $factory = new MemoryStrategyFactory($definition);
+
+            $strategy = $factory->createInstance();
+
+            expect($strategy)->toBeInstanceOf(DatabaseMemoryStrategy::class);
+        });
+
+        test('creates null strategy with configuration', function () {
+            $configs = ['enabled' => false, 'debug' => true];
+            $definition = new MemoryDefinition('null', $configs);
+            $factory = new MemoryStrategyFactory($definition);
+
+            $strategy = $factory->createInstance();
+
+            expect($strategy)->toBeInstanceOf(NullMemoryStrategy::class);
+        });
     });
 
-    test('throws exception for disabled strategy', function () {
-        expect(fn () => $this->factory->create('null'))
-            ->toThrow(\InvalidArgumentException::class, "Memory strategy 'null' is disabled");
+    describe('factory behavior consistency', function () {
+        test('creates new instances on each call', function () {
+            $definition = new MemoryDefinition('session');
+            $factory = new MemoryStrategyFactory($definition);
+
+            $instance1 = $factory->createInstance();
+            $instance2 = $factory->createInstance();
+
+            expect($instance1)->toBeInstanceOf(SessionMemoryStrategy::class)
+                ->and($instance2)->toBeInstanceOf(SessionMemoryStrategy::class)
+                ->and($instance1)->not->toBe($instance2); // Different instances
+        });
+
+        test('uses same configuration for multiple instances', function () {
+            $configs = ['prefix' => 'consistent_prefix'];
+            $definition = new MemoryDefinition('session', $configs);
+            $factory = new MemoryStrategyFactory($definition);
+
+            $instance1 = $factory->createInstance();
+            $instance2 = $factory->createInstance();
+
+            expect($instance1)->toBeInstanceOf(SessionMemoryStrategy::class)
+                ->and($instance2)->toBeInstanceOf(SessionMemoryStrategy::class);
+        });
     });
 
-    test('throws exception for unknown strategy', function () {
-        expect(fn () => $this->factory->create('unknown'))
-            ->toThrow(\InvalidArgumentException::class, 'Invalid memory strategy');
-    });
-});
-
-describe('MemoryStrategyFactory Configuration Integration', function () {
-    test('uses configuration for strategy creation', function () {
-        $config = new MemoryConfiguration([
-            'default' => 'database',
-            'strategies' => [
+    describe('edge cases and robustness', function () {
+        test('handles complex nested configurations', function () {
+            $complexConfigs = [
                 'database' => [
-                    'enabled' => true,
-                    'table' => 'custom_memory_table'
-                ]
-            ]
-        ]);
-        
-        $factory = new MemoryStrategyFactory($config);
-        
-        expect($factory->hasStrategy('database'))->toBeTrue();
-        expect($config->getDefaultStrategy())->toBe('database');
-    });
+                    'connections' => [
+                        'primary' => ['host' => 'localhost'],
+                        'backup' => ['host' => 'backup.example.com']
+                    ]
+                ],
+                'options' => [1, 2, 3, 'test', true, null]
+            ];
 
-    test('respects enabled/disabled strategy settings', function () {
-        $config = new MemoryConfiguration([
-            'strategies' => [
-                'session' => ['enabled' => false],
-                'database' => ['enabled' => true],
-            ]
-        ]);
-        
-        $factory = new MemoryStrategyFactory($config);
-        
-        expect($factory->hasStrategy('session'))->toBeFalse()
-            ->and($factory->hasStrategy('database'))->toBeTrue();
-    });
+            $definition = new MemoryDefinition('database', $complexConfigs);
+            $factory = new MemoryStrategyFactory($definition);
 
-    test('handles empty configuration gracefully', function () {
-        $config = new MemoryConfiguration([]);
-        $factory = new MemoryStrategyFactory($config);
-        
-        // Should still work with defaults
-        expect($factory->hasStrategy('session'))->toBeTrue(); // Default strategy
-        expect($factory->getAvailableStrategies())->toBeArray();
+            $strategy = $factory->createInstance();
+
+            expect($strategy)->toBeInstanceOf(DatabaseMemoryStrategy::class);
+        });
+
+        test('handles empty configuration gracefully', function () {
+            $definition = new MemoryDefinition('null', []);
+            $factory = new MemoryStrategyFactory($definition);
+
+            $strategy = $factory->createInstance();
+
+            expect($strategy)->toBeInstanceOf(NullMemoryStrategy::class);
+        });
     });
-});
+})->group('memory', 'factory', 'unit');

@@ -51,20 +51,6 @@ class NullMemoryStrategy implements MemoryStrategyInterface
         return true;
     }
 
-    public function getStrategyName(): string
-    {
-        return 'null';
-    }
-
-    public function isHealthy(): bool
-    {
-        return true;
-    }
-
-    public function getConfiguration(): array
-    {
-        return $this->config;
-    }
 
     public function cleanupExpired(): int
     {

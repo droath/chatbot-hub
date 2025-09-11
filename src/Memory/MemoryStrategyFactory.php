@@ -4,77 +4,79 @@ declare(strict_types=1);
 
 namespace Droath\ChatbotHub\Memory;
 
-use Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface;
-use Droath\ChatbotHub\Memory\Contracts\MemoryStrategyInterface;
-use Droath\ChatbotHub\Memory\Configuration\MemoryConfiguration;
+use Droath\ChatbotHub\Memory\Strategies\NullMemoryStrategy;
 use Droath\ChatbotHub\Memory\Strategies\SessionMemoryStrategy;
 use Droath\ChatbotHub\Memory\Strategies\DatabaseMemoryStrategy;
-use Droath\ChatbotHub\Memory\Strategies\NullMemoryStrategy;
-use InvalidArgumentException;
+use Droath\ChatbotHub\Memory\Contracts\MemoryStrategyInterface;
 
 /**
  * Factory for creating memory strategy instances.
- * 
+ *
  * Provides centralized creation of memory strategies with proper configuration
  * and validation.
  */
 class MemoryStrategyFactory
 {
-    protected MemoryConfiguration $configuration;
-
-    public function __construct(MemoryConfiguration $configuration)
-    {
-        $this->configuration = $configuration;
-    }
+    /**
+     * Define the class mappings for memory strategies.
+     */
+    private const array STRATEGY_CLASSES = [
+        'null' => NullMemoryStrategy::class,
+        'session' => SessionMemoryStrategy::class,
+        'database' => DatabaseMemoryStrategy::class,
+    ];
 
     /**
-     * Create a memory strategy instance.
+     * Initialize the memory strategy factory.
      */
-    public function create(string $strategy): MemoryStrategyInterface
+    public function __construct(
+        protected MemoryDefinition $definition
+    ) {}
+
+    /**
+     * Creates and returns an instance of the appropriate memory strategy.
+     *
+     * @return \Droath\ChatbotHub\Memory\Contracts\MemoryStrategyInterface
+     *   The instance of the memory strategy.
+     */
+    public function createInstance(): MemoryStrategyInterface
     {
-        if (!$this->configuration->isStrategyEnabled($strategy)) {
-            throw new InvalidArgumentException("Memory strategy '{$strategy}' is disabled");
+        $strategyType = $this->definition->getType();
+
+        if (! isset(self::STRATEGY_CLASSES[$strategyType])) {
+            throw new \InvalidArgumentException(
+                "Unknown memory strategy: $strategyType"
+            );
+        }
+        $classname = self::STRATEGY_CLASSES[$strategyType];
+
+        if (! class_exists($classname)) {
+            throw new \InvalidArgumentException(
+                "Invalid memory instance: $classname"
+            );
         }
 
-        $strategyConfig = $this->configuration->getStrategyConfig($strategy);
-
-        return match ($strategy) {
-            'session' => new SessionMemoryStrategy($strategyConfig),
-            'database' => new DatabaseMemoryStrategy($strategyConfig),
-            'null' => new NullMemoryStrategy($strategyConfig),
-            default => throw new InvalidArgumentException("Unknown memory strategy: {$strategy}")
-        };
-    }
-
-    /**
-     * Create the default memory strategy.
-     */
-    public function createDefault(): MemoryStrategyInterface
-    {
-        return $this->create($this->configuration->getDefaultStrategy());
-    }
-
-    /**
-     * Get available strategies.
-     */
-    public function getAvailableStrategies(): array
-    {
-        return array_filter(
-            $this->configuration->getAvailableStrategies(),
-            fn (string $strategy) => $this->configuration->isStrategyEnabled($strategy)
+        return new $classname(
+            $this->getConfigs()
         );
     }
 
     /**
-     * Check if a strategy is available.
+     * Retrieves the strategy configurations.
+     *
+     * @return array
+     *   Returns the merged configuration array of system defaults and specific
+     *   definitions.
      */
-    public function hasStrategy(string $strategy): bool
+    protected function getConfigs(): array
     {
-        try {
-            return in_array($strategy, MemoryConfiguration::VALID_STRATEGIES, true) &&
-                   $this->configuration->isStrategyEnabled($strategy);
-        } catch (InvalidArgumentException) {
-            return false;
-        }
+        $type = $this->definition->getType();
+
+        $systemConfig = config("chatbot-hub.memory.strategies.$type", []);
+
+        return array_replace_recursive(
+            $systemConfig,
+            $this->definition->getConfigs()
+        );
     }
 }

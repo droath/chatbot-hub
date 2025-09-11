@@ -6,7 +6,7 @@ namespace Droath\ChatbotHub\Memory\Exceptions;
 
 /**
  * Exception thrown when memory storage operations fail.
- * 
+ *
  * Used for errors during set, get, forget, or flush operations
  * when the underlying storage mechanism encounters issues.
  */
@@ -21,7 +21,7 @@ class MemoryStorageException extends MemoryException
         if ($strategy) {
             $message .= " using {$strategy} strategy";
         }
-        
+
         return static::forKey($key, $message, $previous)->setStrategy($strategy);
     }
 
@@ -34,7 +34,7 @@ class MemoryStorageException extends MemoryException
         if ($strategy) {
             $message .= " using {$strategy} strategy";
         }
-        
+
         return static::forKey($key, $message, $previous)->setStrategy($strategy);
     }
 
@@ -47,7 +47,7 @@ class MemoryStorageException extends MemoryException
         if ($strategy) {
             $message .= " using {$strategy} strategy";
         }
-        
+
         return static::forKey($key, $message, $previous)->setStrategy($strategy);
     }
 
@@ -60,7 +60,7 @@ class MemoryStorageException extends MemoryException
         if ($strategy) {
             $message .= " using {$strategy} strategy";
         }
-        
+
         return static::forStrategy($strategy, $message, $previous);
     }
 }
