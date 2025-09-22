@@ -8,13 +8,14 @@ use Exception;
 
 /**
  * Base exception for memory-related errors.
- * 
+ *
  * All memory system exceptions should extend this class for consistent
  * error handling and categorization.
  */
 class MemoryException extends Exception
 {
     protected string $memoryKey = '';
+
     protected string $strategy = '';
 
     /**
@@ -23,6 +24,7 @@ class MemoryException extends Exception
     public function setMemoryKey(string $key): static
     {
         $this->memoryKey = $key;
+
         return $this;
     }
 
@@ -40,6 +42,7 @@ class MemoryException extends Exception
     public function setStrategy(string $strategy): static
     {
         $this->strategy = $strategy;
+
         return $this;
     }
 
@@ -57,6 +60,7 @@ class MemoryException extends Exception
     public static function forKey(string $key, string $message = '', ?Exception $previous = null): static
     {
         $exception = new static($message ?: "Memory error for key: {$key}", 0, $previous);
+
         return $exception->setMemoryKey($key);
     }
 
@@ -66,6 +70,7 @@ class MemoryException extends Exception
     public static function forStrategy(string $strategy, string $message = '', ?Exception $previous = null): static
     {
         $exception = new static($message ?: "Memory error in strategy: {$strategy}", 0, $previous);
+
         return $exception->setStrategy($strategy);
     }
 }

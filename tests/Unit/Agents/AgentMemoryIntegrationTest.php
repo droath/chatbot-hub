@@ -48,10 +48,12 @@ describe('Agent Memory Integration', function () {
             }
 
             // Create a wrapper that implements AgentMemoryInterface
-            $memoryWrapper = new class($strategy) implements \Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface {
+            $memoryWrapper = new class($strategy) implements \Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface
+            {
                 private $strategy;
 
-                public function __construct($strategy) {
+                public function __construct($strategy)
+                {
                     $this->strategy = $strategy;
                 }
 
@@ -99,10 +101,12 @@ describe('Agent Memory Integration', function () {
             expect($strategy)->toBeInstanceOf(DatabaseMemoryStrategy::class);
 
             // Create a wrapper that implements AgentMemoryInterface
-            $memoryWrapper = new class($strategy) implements \Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface {
+            $memoryWrapper = new class($strategy) implements \Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface
+            {
                 private $strategy;
 
-                public function __construct($strategy) {
+                public function __construct($strategy)
+                {
                     $this->strategy = $strategy;
                 }
 
@@ -141,7 +145,7 @@ describe('Agent Memory Integration', function () {
 
             // Verify data was stored in database
             expect(AgentMemory::where('key', 'db_test_key')->exists())->toBeTrue();
-            
+
             // Clean up
             expect($memoryWrapper->forget('db_test_key'))->toBeTrue();
             expect(AgentMemory::where('key', 'db_test_key')->exists())->toBeFalse();
@@ -155,10 +159,12 @@ describe('Agent Memory Integration', function () {
             $strategy = $factory->createInstance();
 
             // Create memory wrapper
-            $memoryWrapper = new class($strategy) implements \Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface {
+            $memoryWrapper = new class($strategy) implements \Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface
+            {
                 private $strategy;
 
-                public function __construct($strategy) {
+                public function __construct($strategy)
+                {
                     $this->strategy = $strategy;
                 }
 

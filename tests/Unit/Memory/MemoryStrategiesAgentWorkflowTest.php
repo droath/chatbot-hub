@@ -22,10 +22,12 @@ describe('Memory Strategies in Agent Workflows', function () {
     beforeEach(function () {
         // Helper to create memory wrapper for AgentMemoryInterface compatibility
         $this->createMemoryWrapper = function ($strategy) {
-            return new class($strategy) implements \Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface {
+            return new class($strategy) implements \Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface
+            {
                 private $strategy;
 
-                public function __construct($strategy) {
+                public function __construct($strategy)
+                {
                     $this->strategy = $strategy;
                 }
 
@@ -125,7 +127,7 @@ describe('Memory Strategies in Agent Workflows', function () {
                 'workflow_id' => 'wf_123',
                 'steps' => ['analyze', 'process', 'respond'],
                 'current_step' => 'process',
-                'metadata' => ['agent_id' => 'agent_001', 'timestamp' => now()->toISOString()]
+                'metadata' => ['agent_id' => 'agent_001', 'timestamp' => now()->toISOString()],
             ];
 
             expect($memoryWrapper->set('complex_workflow', $complexData))->toBeTrue();
@@ -324,7 +326,7 @@ describe('Memory Strategies in Agent Workflows', function () {
                 'status' => 'initialized',
                 'steps_completed' => [],
                 'current_step' => 'step_1',
-                'data' => ['input' => 'raw_data']
+                'data' => ['input' => 'raw_data'],
             ];
 
             expect($memoryWrapper->set("workflow_{$workflowData['id']}", $workflowData))->toBeTrue();

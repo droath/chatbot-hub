@@ -119,7 +119,7 @@ it('uses default strategy types when no config is provided', function () {
     expect($results)->toHaveKey('total_cleaned');
     expect($results)->toHaveKey('strategies');
     expect($results['strategies'])->toBeArray();
-    
+
     // In test environment, strategies might fail to instantiate, so just verify structure
     expect($results['total_cleaned'])->toBeInt();
 });
@@ -127,7 +127,7 @@ it('uses default strategy types when no config is provided', function () {
 it('can get cleanup statistics', function () {
     // Configure specific strategies for testing
     Config::set('chatbot-hub.memory.cleanup.strategies', ['database', 'session']);
-    
+
     $stats = $this->service->getCleanupStats();
 
     expect($stats)->toBeArray();
@@ -137,7 +137,7 @@ it('can get cleanup statistics', function () {
     foreach ($stats as $strategyType => $strategyStats) {
         expect($strategyStats)->toHaveKey('available');
         expect($strategyStats)->toHaveKey('last_cleanup');
-        
+
         // Should be available since these are valid strategies
         expect($strategyStats['available'])->toBeTrue();
     }
@@ -158,7 +158,7 @@ it('logs cleanup activities appropriately', function () {
     Log::shouldReceive('info')->with('Memory cleanup completed. 1 strategies cleaned successfully');
 
     $results = $this->service->cleanupAll();
-    
+
     // Service now counts successful strategies
     expect($results['total_cleaned'])->toBe(1);
     expect($results['strategies']['database']['status'])->toBe('success');

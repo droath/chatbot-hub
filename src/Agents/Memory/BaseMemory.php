@@ -8,7 +8,7 @@ use Droath\ChatbotHub\Agents\Contracts\AgentMemoryInterface;
 
 /**
  * Base memory class providing common functionality.
- * 
+ *
  * This is maintained as an abstract class to preserve existing architecture
  * while providing backward compatibility.
  */

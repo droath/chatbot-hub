@@ -160,15 +160,15 @@ describe('DatabaseMemoryStrategy', function () {
             // Test that the strategy can be instantiated and has the proper structure
             // for error handling. Actual database errors are hard to simulate reliably
             // in unit tests, but we can verify the strategy has the right methods and structure.
-            
+
             $strategy = new DatabaseMemoryStrategy([
                 'table' => 'agent_memory',
-                'connection' => null
+                'connection' => null,
             ]);
-            
+
             // Verify the strategy implements the interface correctly
             expect($strategy)->toBeInstanceOf(\Droath\ChatbotHub\Memory\Contracts\MemoryStrategyInterface::class);
-            
+
             // Check that key methods exist and have the right signatures
             expect(method_exists($strategy, 'set'))->toBeTrue();
             expect(method_exists($strategy, 'get'))->toBeTrue();
@@ -176,7 +176,7 @@ describe('DatabaseMemoryStrategy', function () {
             expect(method_exists($strategy, 'forget'))->toBeTrue();
             expect(method_exists($strategy, 'flush'))->toBeTrue();
             expect(method_exists($strategy, 'cleanupExpired'))->toBeTrue();
-            
+
             // In a working environment, operations should succeed
             // Error handling is tested through the try-catch blocks in the actual implementation
             expect(true)->toBeTrue(); // Test passes if we get here without exceptions

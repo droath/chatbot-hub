@@ -33,6 +33,7 @@ class MemoryCleanupCommand extends Command
             $this->warn('DRY RUN MODE - No actual cleanup will be performed');
             $stats = $cleanupService->getCleanupStats();
             $this->displayStats($stats);
+
             return self::SUCCESS;
         }
 
@@ -53,6 +54,7 @@ class MemoryCleanupCommand extends Command
 
         if (empty($results['strategies'])) {
             $this->warn('No strategies were configured for cleanup');
+
             return;
         }
 
@@ -77,6 +79,7 @@ class MemoryCleanupCommand extends Command
 
         if (empty($stats)) {
             $this->warn('No strategies found');
+
             return;
         }
 

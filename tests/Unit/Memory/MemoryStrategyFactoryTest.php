@@ -142,7 +142,7 @@ describe('MemoryStrategyFactory', function () {
         test('creates session strategy with custom configuration', function () {
             $configs = [
                 'prefix' => 'custom_agent_memory',
-                'enabled' => true
+                'enabled' => true,
             ];
             $definition = new MemoryDefinition('session', $configs);
             $factory = new MemoryStrategyFactory($definition);
@@ -156,7 +156,7 @@ describe('MemoryStrategyFactory', function () {
             $configs = [
                 'table' => 'custom_memory_table',
                 'connection' => 'mysql',
-                'cleanup_probability' => 50
+                'cleanup_probability' => 50,
             ];
             $definition = new MemoryDefinition('database', $configs);
             $factory = new MemoryStrategyFactory($definition);
@@ -209,10 +209,10 @@ describe('MemoryStrategyFactory', function () {
                 'database' => [
                     'connections' => [
                         'primary' => ['host' => 'localhost'],
-                        'backup' => ['host' => 'backup.example.com']
-                    ]
+                        'backup' => ['host' => 'backup.example.com'],
+                    ],
                 ],
-                'options' => [1, 2, 3, 'test', true, null]
+                'options' => [1, 2, 3, 'test', true, null],
             ];
 
             $definition = new MemoryDefinition('database', $complexConfigs);

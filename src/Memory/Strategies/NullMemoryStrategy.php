@@ -8,7 +8,7 @@ use Droath\ChatbotHub\Memory\Contracts\MemoryStrategyInterface;
 
 /**
  * Null memory strategy implementation.
- * 
+ *
  * No-op implementation for testing or when memory is not needed.
  * All operations succeed but no data is actually stored or retrieved.
  */
@@ -50,7 +50,6 @@ class NullMemoryStrategy implements MemoryStrategyInterface
         // No-op implementation, always succeeds
         return true;
     }
-
 
     public function cleanupExpired(): ?bool
     {
